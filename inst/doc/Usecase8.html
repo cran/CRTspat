@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Use Case 08: Eggs - to fry or scramble?</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Use Case 08: Eggs - to fry or
+scramble?</h1>
+
+
+
+<p>In trials of malaria interventions, a ‘fried-egg’ design is often
+used to avoid the downward bias in the estimates of efficacy caused by
+contamination. This entails estimating the outcome only from the cores
+of the clusters. However, the intervention must also be introduced in
+the buffer zone, so the trial may be very expensive if there are high
+per capita intervention costs. Since the buffer zone is excluded from
+data collection, there are usually no data on whether the buffer is
+large enough to avoid contamination effects. A precautionary approach
+with large buffer zones is therefore the norm. However with ‘fried-eggs’
+there are no data on the scale of the contamination, so if the effect
+was swamped by unexpectedly large contamination, this would be
+indistinguishable from failure of the intervention.</p>
+<p>The alternative design is to sample in the buffer zones, accepting
+some degree of contamination. The data analysis might then be used to
+estimate the scale of contamination (see <a href="Usecase5.html">Use
+Case 5</a>). The statistical model might be to adjust the estimate of
+effect size for the contamination effect, or to decide which
+contaminated areas to exclude <em>post hoc</em> from the definitive
+analysis (based on pre-defined criteria). This is expected to lead to
+some loss of power, compared to collecting the same amount of outcome
+data from the core area alone (though this might be compensated for by
+increasing data collection), but is likely to be less complicated to
+organise, allowing the trial to be carried out over a much smaller area,
+with far fewer locations needing to be randomized (see <a href="Usecase4.html">Use Case 4</a>).</p>
+<p>In this example, the effects of reducing the numbers of observations
+on power and bias are evaluated in simulated datasets. To compare
+‘fried-egg’ strategies with comparable designs that sample the whole
+area, sets of locations are removed, either randomly from the whole
+area, or systematically depending on the distance from the boundary
+between arms. As in <a href="Usecase7.html">Use Case 7</a>, spatially
+homogeneous background disease rates are assigned, using
+<code>propensity &lt;- 1</code>, fixed values are used for the outcome
+in the control arm, the target ICC of the simulations and the number of
+clusters in each arm of the trial. Efficacy is also fixed at 0.4. The
+contamination interval is sampled from a uniform(0, 1.5km)
+distribution.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(CRTspat)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="co"># use the locations only from example dataset (as with Use Case 7)</span></span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>example <span class="ot">&lt;-</span> <span class="fu">readdata</span>(<span class="st">&quot;exampleCRT.txt&quot;</span>)</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>trial <span class="ot">&lt;-</span> example<span class="sc">$</span>trial[ , <span class="fu">c</span>(<span class="st">&quot;x&quot;</span>,<span class="st">&quot;y&quot;</span>, <span class="st">&quot;denom&quot;</span>)]</span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>trial<span class="sc">$</span>propensity <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a>CRT <span class="ot">&lt;-</span> <span class="fu">CRTsp</span>(trial)</span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a><span class="co"># specify:</span></span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a><span class="co">#   prevalence in the absence of intervention;</span></span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a><span class="co">#   anticipated ICC;</span></span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a><span class="co">#   clusters in each arm</span></span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a>outcome0 <span class="ot">&lt;-</span> <span class="fl">0.4</span></span>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a>ICC <span class="ot">&lt;-</span> <span class="fl">0.05</span></span>
+<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a>k <span class="ot">&lt;-</span> <span class="dv">25</span></span>
+<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a><span class="co"># the number of trial simulations required (a small number, is used for testing, the plots are based on 1000)</span></span>
+<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a>nsimulations <span class="ot">&lt;-</span> <span class="dv">2</span></span>
+<span id="cb1-17"><a href="#cb1-17" tabindex="-1"></a>theta_vec <span class="ot">&lt;-</span> <span class="fu">runif</span>(nsimulations,<span class="dv">0</span>,<span class="fl">1.5</span>)</span>
+<span id="cb1-18"><a href="#cb1-18" tabindex="-1"></a>radii <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">0.1</span>, <span class="fl">0.2</span>, <span class="fl">0.3</span>, <span class="fl">0.4</span>, <span class="fl">0.5</span>)</span>
+<span id="cb1-19"><a href="#cb1-19" tabindex="-1"></a>proportions <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">0.1</span>, <span class="fl">0.2</span>, <span class="fl">0.3</span>, <span class="fl">0.4</span>, <span class="fl">0.5</span>)</span>
+<span id="cb1-20"><a href="#cb1-20" tabindex="-1"></a>scenarios <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">radius =</span> <span class="fu">c</span>(radii, <span class="fu">rep</span>(<span class="dv">0</span>,<span class="dv">6</span>)),</span>
+<span id="cb1-21"><a href="#cb1-21" tabindex="-1"></a>                <span class="at">proportion =</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="dv">0</span>,<span class="dv">6</span>), proportions))</span>
+<span id="cb1-22"><a href="#cb1-22" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">7</span>)</span></code></pre></div>
+<p>Two user functions are required:</p>
+<ul>
+<li>randomization and trial simulation</li>
+<li>analysis of each simulated trial with different sets of locations
+removed</li>
+</ul>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>analyseReducedCRT <span class="ot">&lt;-</span> <span class="cf">function</span>(x, CRT) {</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>  trial <span class="ot">&lt;-</span> CRT<span class="sc">$</span>trial</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>  radius <span class="ot">&lt;-</span> x[[<span class="st">&quot;radius&quot;</span>]]</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>  proportion <span class="ot">&lt;-</span> x[[<span class="st">&quot;proportion&quot;</span>]]</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>  <span class="fu">cat</span>(radius,proportion)</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>  nlocations <span class="ot">&lt;-</span> <span class="fu">nrow</span>(trial)</span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>  <span class="cf">if</span> (radius <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>    radius <span class="ot">&lt;-</span> radius <span class="sc">+</span> <span class="fu">runif</span>(<span class="dv">1</span>, <span class="sc">-</span><span class="fl">0.05</span>, <span class="fl">0.05</span>)</span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>    trial<span class="sc">$</span>num[<span class="fu">abs</span>(trial<span class="sc">$</span>nearestDiscord) <span class="sc">&lt;</span> radius] <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>  }</span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>  <span class="cf">if</span> (proportion <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a>    <span class="co"># add random variation to proportion to avoid heaping</span></span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a>    proportion <span class="ot">&lt;-</span> proportion <span class="sc">+</span> <span class="fu">runif</span>(<span class="dv">1</span>, <span class="sc">-</span><span class="fl">0.05</span>, <span class="fl">0.05</span>)</span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a>    trial<span class="sc">$</span>num <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(<span class="fu">runif</span>(nlocations,<span class="dv">0</span>,<span class="dv">1</span>) <span class="sc">&lt;</span> proportion, <span class="cn">NA</span>, trial<span class="sc">$</span>num)</span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a>  }</span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a>  trial <span class="ot">&lt;-</span> trial[<span class="sc">!</span><span class="fu">is.na</span>(trial<span class="sc">$</span>num),]</span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a>  resX <span class="ot">&lt;-</span> <span class="fu">CRTanalysis</span>(trial,<span class="at">method =</span> <span class="st">&quot;LME4&quot;</span>, <span class="at">cfunc =</span> <span class="st">&quot;X&quot;</span>)</span>
+<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a>  resZ <span class="ot">&lt;-</span> <span class="fu">CRTanalysis</span>(trial,<span class="at">method =</span> <span class="st">&quot;LME4&quot;</span>, <span class="at">cfunc =</span> <span class="st">&quot;Z&quot;</span>)</span>
+<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a>  LRchisq <span class="ot">&lt;-</span> resZ<span class="sc">$</span>pt_ests<span class="sc">$</span>deviance <span class="sc">-</span> resX<span class="sc">$</span>pt_ests<span class="sc">$</span>deviance</span>
+<span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a>  significant <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(LRchisq <span class="sc">&gt;</span> <span class="fl">3.84</span>, <span class="dv">1</span>, <span class="dv">0</span>)</span>
+<span id="cb2-21"><a href="#cb2-21" tabindex="-1"></a>  result <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">radius =</span> radius,</span>
+<span id="cb2-22"><a href="#cb2-22" tabindex="-1"></a>                 <span class="at">proportion =</span> proportion,</span>
+<span id="cb2-23"><a href="#cb2-23" tabindex="-1"></a>                 <span class="at">observations =</span> <span class="fu">nrow</span>(trial),</span>
+<span id="cb2-24"><a href="#cb2-24" tabindex="-1"></a>                 <span class="at">significant =</span> significant,</span>
+<span id="cb2-25"><a href="#cb2-25" tabindex="-1"></a>                 <span class="at">effect_size =</span> resX<span class="sc">$</span>pt_ests<span class="sc">$</span>effect_size)</span>
+<span id="cb2-26"><a href="#cb2-26" tabindex="-1"></a>  <span class="fu">return</span>(result)</span>
+<span id="cb2-27"><a href="#cb2-27" tabindex="-1"></a>}</span>
+<span id="cb2-28"><a href="#cb2-28" tabindex="-1"></a></span>
+<span id="cb2-29"><a href="#cb2-29" tabindex="-1"></a><span class="co"># randomization and trial simulation</span></span>
+<span id="cb2-30"><a href="#cb2-30" tabindex="-1"></a>randomize_simulate <span class="ot">&lt;-</span> <span class="cf">function</span>(theta) {</span>
+<span id="cb2-31"><a href="#cb2-31" tabindex="-1"></a>  ex <span class="ot">&lt;-</span> <span class="fu">specify_clusters</span>(CRT, <span class="at">k =</span> k, <span class="at">algo =</span> <span class="st">&quot;kmeans&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb2-32"><a href="#cb2-32" tabindex="-1"></a>    <span class="fu">randomizeCRT</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb2-33"><a href="#cb2-33" tabindex="-1"></a>    <span class="fu">simulateCRT</span>(<span class="at">effect =</span> <span class="fl">0.4</span>, <span class="at">generateBaseline =</span> <span class="cn">FALSE</span>, <span class="at">outcome0 =</span> outcome0,</span>
+<span id="cb2-34"><a href="#cb2-34" tabindex="-1"></a>                <span class="at">ICC_inp =</span> ICC, <span class="at">theta_inp =</span> theta,</span>
+<span id="cb2-35"><a href="#cb2-35" tabindex="-1"></a>                <span class="at">matchedPair =</span> <span class="cn">FALSE</span>, <span class="at">scale =</span> <span class="st">&quot;proportion&quot;</span>, <span class="at">denominator =</span> <span class="st">&quot;denom&quot;</span>, <span class="at">tol =</span> <span class="fl">0.01</span>)</span>
+<span id="cb2-36"><a href="#cb2-36" tabindex="-1"></a>  <span class="co"># The results are collected in a data frame</span></span>
+<span id="cb2-37"><a href="#cb2-37" tabindex="-1"></a>  sub_results_matrix <span class="ot">&lt;-</span> <span class="fu">apply</span>(scenarios, <span class="at">MARGIN =</span> <span class="dv">1</span>,  <span class="at">FUN =</span> analyseReducedCRT, <span class="at">CRT =</span> ex)</span>
+<span id="cb2-38"><a href="#cb2-38" tabindex="-1"></a>  sub_results <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(<span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(sub_results_matrix, as.data.frame)))</span>
+<span id="cb2-39"><a href="#cb2-39" tabindex="-1"></a>  sub_results<span class="sc">$</span>theta_inp <span class="ot">&lt;-</span> theta</span>
+<span id="cb2-40"><a href="#cb2-40" tabindex="-1"></a><span class="fu">return</span>(sub_results)</span>
+<span id="cb2-41"><a href="#cb2-41" tabindex="-1"></a>}</span></code></pre></div>
+<p>Collect all the analysis results and plot. Note that some analyses
+result in warnings (because of problems computing some of the
+descriptive statistics when the number of observations in some clusters
+is very small)</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">simulation =</span> <span class="fu">numeric</span>(<span class="dv">0</span>),</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>                <span class="at">radius =</span> <span class="fu">numeric</span>(<span class="dv">0</span>),</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>               <span class="at">proportion =</span> <span class="fu">numeric</span>(<span class="dv">0</span>),</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>               <span class="at">observations =</span> <span class="fu">numeric</span>(<span class="dv">0</span>),</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>               <span class="at">significant =</span> <span class="fu">numeric</span>(<span class="dv">0</span>),</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>               <span class="at">effect_size =</span> <span class="fu">numeric</span>(<span class="dv">0</span>),</span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>               <span class="at">gamma =</span> <span class="fu">numeric</span>(<span class="dv">0</span>))</span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>simulation <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a><span class="cf">for</span>(theta <span class="cf">in</span> theta_vec){</span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a>  simulation <span class="ot">&lt;-</span> simulation <span class="sc">+</span> <span class="dv">1</span></span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a>  sub_results <span class="ot">&lt;-</span> <span class="fu">randomize_simulate</span>(theta)</span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a>  sub_results<span class="sc">$</span>simulation <span class="ot">&lt;-</span> simulation</span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a>  results <span class="ot">&lt;-</span> <span class="fu">rbind</span>(results,sub_results)</span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a>}</span></code></pre></div>
+<pre><code>## 0 00.1 00.2 00.3 00.4 00.5 00 00 0.10 0.20 0.30 0.40 0.50 00.1 00.2 00.3 00.4 00.5 00 00 0.10 0.20 0.30 0.40 0.5</code></pre>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>results<span class="sc">$</span>fried <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(results<span class="sc">$</span>radius <span class="sc">&gt;</span> <span class="dv">0</span>, <span class="st">&#39;fried&#39;</span>,</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>                      <span class="fu">ifelse</span>(results<span class="sc">$</span>proportion <span class="sc">&gt;</span> <span class="dv">0</span>, <span class="st">&#39;scrambled&#39;</span>, <span class="st">&#39;neither&#39;</span>))</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>results<span class="sc">$</span>bias <span class="ot">&lt;-</span> results<span class="sc">$</span>effect_size <span class="sc">-</span> <span class="fl">0.5</span></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="fu">theme_set</span>(<span class="fu">theme_bw</span>(<span class="at">base_size =</span> <span class="dv">12</span>))</span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>fig8_1a <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(<span class="at">data =</span> results, <span class="fu">aes</span>(<span class="at">x =</span> observations, <span class="at">y =</span> significant, <span class="at">color =</span> <span class="fu">factor</span>(fried))) <span class="sc">+</span></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">size =</span> <span class="dv">2</span>, <span class="at">se =</span> <span class="cn">FALSE</span>, <span class="at">show.legend =</span> <span class="cn">FALSE</span>, <span class="at">method =</span> <span class="st">&quot;loess&quot;</span>, <span class="at">span =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>  <span class="fu">scale_colour_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">&quot;#b2df8a&quot;</span>,<span class="st">&quot;#D55E00&quot;</span>,<span class="st">&quot;#0072A7&quot;</span>)) <span class="sc">+</span></span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a>    <span class="fu">xlab</span>(<span class="st">&#39;Number of locations in analysis&#39;</span>) <span class="sc">+</span></span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>    <span class="fu">ylab</span>(<span class="st">&#39;Power&#39;</span>)</span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a>fig8_1b <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(<span class="at">data =</span> results, <span class="fu">aes</span>(<span class="at">x =</span> theta_inp, <span class="at">y =</span> significant, <span class="at">color =</span> <span class="fu">factor</span>(fried))) <span class="sc">+</span></span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">size =</span> <span class="dv">2</span>, <span class="at">se =</span> <span class="cn">FALSE</span>, <span class="at">show.legend =</span> <span class="cn">FALSE</span>, <span class="at">method =</span> <span class="st">&quot;loess&quot;</span>, <span class="at">span =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a>  <span class="fu">scale_colour_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">&quot;#b2df8a&quot;</span>,<span class="st">&quot;#D55E00&quot;</span>,<span class="st">&quot;#0072A7&quot;</span>)) <span class="sc">+</span></span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a>    <span class="fu">xlab</span>(<span class="st">&#39;Simulated contamination range (km)&#39;</span>) <span class="sc">+</span></span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a>    <span class="fu">ylab</span>(<span class="st">&#39;Power&#39;</span>)</span>
+<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a>fig8_1c <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(<span class="at">data =</span> results, <span class="fu">aes</span>(<span class="at">x =</span> observations, <span class="at">y =</span> bias, <span class="at">color =</span> <span class="fu">factor</span>(fried))) <span class="sc">+</span></span>
+<span id="cb5-18"><a href="#cb5-18" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">size =</span> <span class="dv">2</span>, <span class="at">se =</span> <span class="cn">FALSE</span>, <span class="at">show.legend =</span> <span class="cn">FALSE</span>, <span class="at">method =</span> <span class="st">&quot;loess&quot;</span>, <span class="at">span =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb5-19"><a href="#cb5-19" tabindex="-1"></a>  <span class="fu">scale_colour_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">&quot;#b2df8a&quot;</span>,<span class="st">&quot;#D55E00&quot;</span>,<span class="st">&quot;#0072A7&quot;</span>)) <span class="sc">+</span></span>
+<span id="cb5-20"><a href="#cb5-20" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">&#39;Number of locations in analysis&#39;</span>) <span class="sc">+</span></span>
+<span id="cb5-21"><a href="#cb5-21" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">&#39;Bias&#39;</span>)</span>
+<span id="cb5-22"><a href="#cb5-22" tabindex="-1"></a>fig8_1d <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(<span class="at">data =</span> results, <span class="fu">aes</span>(<span class="at">x =</span> theta_inp, <span class="at">y =</span> bias, <span class="at">color =</span> <span class="fu">factor</span>(fried))) <span class="sc">+</span></span>
+<span id="cb5-23"><a href="#cb5-23" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">size =</span> <span class="dv">2</span>, <span class="at">se =</span> <span class="cn">FALSE</span>, <span class="at">show.legend =</span> <span class="cn">FALSE</span>, <span class="at">method =</span> <span class="st">&quot;loess&quot;</span>, <span class="at">span =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb5-24"><a href="#cb5-24" tabindex="-1"></a>  <span class="fu">scale_colour_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">&quot;#b2df8a&quot;</span>,<span class="st">&quot;#D55E00&quot;</span>,<span class="st">&quot;#0072A7&quot;</span>)) <span class="sc">+</span></span>
+<span id="cb5-25"><a href="#cb5-25" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">&#39;Simulated contamination range (km)&#39;</span>) <span class="sc">+</span></span>
+<span id="cb5-26"><a href="#cb5-26" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">&#39;Bias&#39;</span>)</span>
+<span id="cb5-27"><a href="#cb5-27" tabindex="-1"></a><span class="fu">library</span>(cowplot)</span>
+<span id="cb5-28"><a href="#cb5-28" tabindex="-1"></a><span class="fu">plot_grid</span>(fig8_1a, fig8_1b, fig8_1c, fig8_1d, <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">&#39;a&#39;</span>, <span class="st">&#39;b&#39;</span>, <span class="st">&#39;c&#39;</span>, <span class="st">&#39;d&#39;</span>), <span class="at">label_size =</span> <span class="dv">14</span>, <span class="at">ncol =</span> <span class="dv">2</span>)</span></code></pre></div>
+<div id="analysis" class="section level4">
+<h4>Analysis</h4>
+<p>Figure 8.1. is are based on analysing 1000 simulated datasets (12,000
+scenarios in all). The power is calculated as the proportion of
+significance tests with likelihood ratio p &lt; 0.05.</p>
+<p>The fried-egg design suffers little loss of power with exclusion of
+observations until the sample size is less than about 750 (the
+suggestion that there is a maximum at a sample size of about 900
+locations is presumably an effect of the smoothing of the results). The
+‘scrambled’ egg trials lose power with each reduction in the number of
+observations (Figure 8.1a), but substantive loss of power occurs only
+with contamination range of 1 km or more in this dataset. The fried egg
+designs largely avoid this loss of power (Figure 8.1b) but are less
+powerful on average when the contamination range is less that 0.5
+km.</p>
+<p>In these simulations, the lme4 estimates of the efficacy are biased
+slightly downwards (i.e. the bias has negative sign). The absolute bias
+was least when some of the locations were excluded (Figure 8.1c). There
+is less absolute bias with the fried-egg designs but the effect is small
+except when the simulated contamination range is very large (Figure
+8.1d). The difference in bias between ‘fried’ and ‘scrambled’ egg
+designs is modest in relation to the scale of the overall bias.</p>
+<p>
+<img src="data:image/png;base64,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"> <br> <em>Fig 8.1 Power and bias by number
+of locations in analysis <span class="math inline">\(\color{purple}{\textbf{----}}\)</span> : Randomly
+sampled locations removed; <span class="math inline">\(\color{green}{\textbf{----}}\)</span> : Fried-egg-
+locations in boundary zone removed. </em>
+</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
