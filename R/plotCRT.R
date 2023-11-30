@@ -183,7 +183,7 @@ plotCRT <- function(object, map = FALSE, distance = "nearestDiscord", fill = "ar
              if(!(fill %in% c("arms", "clusters"))){
                 # raster map derived from inla analysis
                 x <- y <- prediction <- nearestDiscord <- NULL
-                g <- ggplot2::ggplot() + ggplot2::theme(aspect.ratio = 1)
+                g <- ggplot2::ggplot()
                 if (!identical(analysis$options$method, "INLA")) {
                     stop("*** Raster plots only available for outputs from INLA analysis ***")
                 } else {
@@ -249,8 +249,7 @@ plotCRT <- function(object, map = FALSE, distance = "nearestDiscord", fill = "ar
         sf_objects <- sf_objects(trial = trial, maskbuffer = maskbuffer)
 
         if (is.null(g))
-            g <- ggplot2::ggplot() + ggplot2::theme(aspect.ratio = 1)
-
+            g <- ggplot2::ggplot()
         if (colourClusters) {
             g <- g + ggplot2::geom_sf(data =  sf_objects$clusters, aes(fill = cluster), fill = cpalette,
                 alpha = 0.8)
@@ -341,7 +340,7 @@ sf_objects <- function(trial, maskbuffer, crs = "Euclidean",
     if (!is.null(trial$arm)) {
         arms <- vor %>%
             sf::st_join(tr, sf::st_intersects) %>%
-            group_by(arm) %>%
+            dplyr::group_by(arm) %>%
             dplyr::summarize()
     }
     # buffer zone

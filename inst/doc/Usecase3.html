@@ -374,30 +374,30 @@ in the chosen geography, assuming baseline data are available.</p>
 ## Coordinate system                      (x, y)            
 ## Locations:                                                      1181            
 ## Available clusters (across both arms)                           Not assigned            
-## Cluster randomization:                      Independently randomized            
+## No randomization          -            
 ## No power calculations to report          -            
 ## 
 ## Other variables in dataset
 ## --------------------------          RDT_test_result  base_denom</code></pre>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="co"># randomly sample an array of values of k (use a small sample size for testing</span></span>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="co"># randomly sample an array of values of c (use a small sample size for testing</span></span>
 <span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="co"># the plots were produced with n=5000)</span></span>
 <span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">5</span>)</span>
-<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>k_vec <span class="ot">&lt;-</span> <span class="fu">round</span>(<span class="fu">runif</span>(<span class="dv">50</span>, <span class="at">min =</span> <span class="dv">6</span>, <span class="at">max =</span> <span class="dv">150</span>))</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>c_vec <span class="ot">&lt;-</span> <span class="fu">round</span>(<span class="fu">runif</span>(<span class="dv">50</span>, <span class="at">min =</span> <span class="dv">6</span>, <span class="at">max =</span> <span class="dv">150</span>))</span>
 <span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a></span>
 <span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="co"># a user function randomizes and analyses each simulated trial</span></span>
-<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>CRTscenario3 <span class="ot">&lt;-</span> <span class="cf">function</span>(k, CRT) {</span>
-<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>    ex <span class="ot">&lt;-</span> <span class="fu">specify_clusters</span>(CRT, <span class="at">k =</span> k, <span class="at">algo =</span> <span class="st">&quot;kmeans&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>CRTscenario3 <span class="ot">&lt;-</span> <span class="cf">function</span>(c, CRT) {</span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>    ex <span class="ot">&lt;-</span> <span class="fu">specify_clusters</span>(CRT, <span class="at">c =</span> c, <span class="at">algo =</span> <span class="st">&quot;kmeans&quot;</span>) <span class="sc">%&gt;%</span></span>
 <span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a>        <span class="fu">randomizeCRT</span>()</span>
 <span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a>      GEEanalysis <span class="ot">&lt;-</span> <span class="fu">CRTanalysis</span>(ex, <span class="at">method =</span> <span class="st">&quot;GEE&quot;</span>, <span class="at">baselineOnly =</span> <span class="cn">TRUE</span>, <span class="at">excludeBuffer =</span> <span class="cn">FALSE</span>,</span>
 <span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a>          <span class="at">baselineNumerator =</span> <span class="st">&quot;RDT_test_result&quot;</span>, <span class="at">baselineDenominator =</span> <span class="st">&quot;base_denom&quot;</span>)</span>
 <span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a>    locations <span class="ot">&lt;-</span> GEEanalysis<span class="sc">$</span>description<span class="sc">$</span>locations</span>
 <span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a>    ICC <span class="ot">&lt;-</span> GEEanalysis<span class="sc">$</span>pt_ests<span class="sc">$</span>ICC</span>
-<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a>    value <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">k =</span> k, <span class="at">ICC =</span> ICC, <span class="at">mean_h =</span> locations<span class="sc">/</span>k)</span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a>    value <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">c =</span> c, <span class="at">ICC =</span> ICC, <span class="at">mean_h =</span> locations<span class="sc">/</span>c)</span>
 <span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a>    <span class="fu">return</span>(value)</span>
 <span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a>}</span>
 <span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a></span>
 <span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a><span class="co"># The results are collected in a data frame</span></span>
-<span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">t</span>(<span class="fu">sapply</span>(k_vec, <span class="at">FUN =</span> CRTscenario3, <span class="at">simplify =</span> <span class="st">&quot;array&quot;</span>, <span class="at">CRT =</span> example)) <span class="sc">%&gt;%</span></span>
+<span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">t</span>(<span class="fu">sapply</span>(c_vec, <span class="at">FUN =</span> CRTscenario3, <span class="at">simplify =</span> <span class="st">&quot;array&quot;</span>, <span class="at">CRT =</span> example)) <span class="sc">%&gt;%</span></span>
 <span id="cb3-20"><a href="#cb3-20" tabindex="-1"></a>    <span class="fu">data.frame</span>()</span></code></pre></div>
 <p>There is a clear downward trend in the ICC estimates, as cluster size
 increases (Figure 3.1). The ICC expected for a trial in this, or

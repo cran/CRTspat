@@ -21,7 +21,6 @@
 #' \code{"hdep"} \tab Tukey half space depth\cr
 #' \code{"sdep"} \tab simplicial depth\cr
 #' }
-#' @param scale_par numeric: pre-specified value of contamination parameter or disc radius
 #' @param cfunc transformation defining the contamination function with options:
 #' \tabular{llll}{
 #' \code{"Z"} \tab\tab arm effects not considered\tab reference model\cr
@@ -32,6 +31,7 @@
 #' \code{"E"} \tab\tab estimation of scale factor\tab only available with \code{distance = "disc"} or \code{distance = "kern"}\cr
 #' \code{"R"} \tab\tab rescaled linear\tab \cr
 #' }
+#' @param scale_par numeric: pre-specified value of the contamination parameter or disc radius for models where this is fixed (\code{cfunc = "R"}).\cr\cr
 #' @param link link function with options:
 #' \tabular{ll}{
 #' \code{"logit"}\tab (the default). \code{numerator} has a binomial distribution with denominator \code{denominator}.\cr
@@ -49,7 +49,9 @@
 #' @param personalProtection logical: indicator of whether the model includes local effects with no contamination
 #' @param clusterEffects logical: indicator of whether the model includes cluster random effects
 #' @param spatialEffects logical: indicator of whether the model includes spatial random effects
+#' (available only for \code{method = "INLA"})
 #' @param requireMesh logical: indicator of whether spatial predictions are required
+#' (available only for \code{method = "INLA"})
 #' @param inla_mesh string: name of pre-existing INLA input object created by \code{compute_mesh()}
 #' @return list of class \code{CRTanalysis} containing the following results of the analysis:
 #' \itemize{
@@ -76,10 +78,12 @@
 #' The \code{model_object} in the output list is the usual output from the statistical analysis routine,
 #' and can be also be inspected with \code{summary()}, or analysed using \code{stats::fitted()}
 #' for purposes of evaluation of model fit etc..\cr\cr
-#' \code{link = "cloglog"} specifies a complementary log-log link function for which the numerator must be coded as 0 or 1.
-#' Technically the binomial denominator is then 1. The value of \code{denominator} is used as a rate multiplier.\cr\cr
+#' For models with a complementary log-log link function specified with \code{link = "cloglog"}.
+#' the numerator must be coded as 0 or 1. Technically the binomial denominator is then 1.
+#' The value of \code{denominator} is used as a rate multiplier.\cr\cr
 #' With the \code{"INLA"} and \code{"MCMC"} methods 'iid' random effects are used to model extra-Poisson variation.\cr\cr
-#' \code{scale_par} specifies the contamination parameter for models where this is fixed (\code{cfunc = "R"}).\cr
+#' Interval estimates for the coefficient of variation of the cluster level outcome are calculated using the method of
+#' [Vangel (1996)](https://www.jstor.org/stable/2685039).
 #' @export
 #' @examples
 #' \donttest{
@@ -265,9 +269,12 @@ CRTanalysis <- function(
     )
 
     # store options here- noting that the model formula depends on allowable values of other options
-    options <- list(method = method, link = link,
-                    distance = distance, cfunc = cfunc,
-                    alpha = alpha, baselineOnly = baselineOnly,
+    options <- list(method = method,
+                    link = link,
+                    distance = distance,
+                    cfunc = cfunc,
+                    alpha = alpha,
+                    baselineOnly = baselineOnly,
                     fterms = fterms,
                     ftext = ftext,
                     CLnames = CLnames,
@@ -284,7 +291,7 @@ CRTanalysis <- function(
     pt_ests <- list(scale_par = NA, personal_protection = NA, contamination_interval = NA)
     int_ests <- list(controlY = NA, interventionY = NA, effect_size = NA)
     model_object <- list()
-    description <- get_description(trial=trial, link=link, baselineOnly)
+    description <- get_description(trial=trial, link=link, alpha=alpha, baselineOnly)
     analysis <- list(trial = trial,
                      pt_ests = pt_ests,
                      int_ests = int_ests,
@@ -447,6 +454,7 @@ compute_mesh <- function(trial = trial, offset = -0.1, max.edge = 0.25,
 }
 
 EMPanalysis <- function(analysis){
+    lp <- arm <- NULL
     description <- analysis$description
     pt_ests <- list()
     pt_ests$controlY <- unname(description$controlY)
@@ -459,31 +467,11 @@ EMPanalysis <- function(analysis){
 }
 
 Tanalysis <- function(analysis) {
-    y1 <- arm <- cluster <- y_off <- NULL
     trial <- analysis$trial
     link <- analysis$options$link
     alpha <- analysis$options$alpha
-
-    clusterSum <- data.frame(
-        trial %>%
-            group_by(cluster) %>%
-            dplyr::summarize(
-                y = sum(y1),
-                total = sum(y_off),
-                arm = arm[1]
-            )
-    )
-    clusterSum$lp <- switch(link,
-                            "identity" = clusterSum$y/clusterSum$total,
-                            "log" = log(clusterSum$y/clusterSum$total),
-                            "logit" = logit(clusterSum$y/clusterSum$total),
-                            "cloglog" = log(clusterSum$y/clusterSum$total))
+    clusterSum <- clusterSummary(trial, link)
     formula <- stats::as.formula("lp ~ arm")
-
-    # Trap any non-finite values
-
-    clusterSum$lp[!is.finite(clusterSum$lp)] <- NA
-
     model_object <- stats::t.test(
         formula = formula, data = clusterSum, alternative = "two.sided",
         conf.level = 1 - alpha, var.equal = TRUE
@@ -518,6 +506,30 @@ Tanalysis <- function(analysis) {
     analysis$pt_ests$p.value <- analysis$model_object$p.value
     return(analysis)
 }
+
+
+clusterSummary <- function(trial = trial, link = link){
+    y1 <- arm <- cluster <- y_off <- NULL
+    clusterSum <- data.frame(
+        trial %>%
+            dplyr::group_by(cluster) %>%
+            dplyr::summarize(
+                y = sum(y1),
+                total = sum(y_off),
+                arm = arm[1]
+            )
+    )
+    clusterSum$lp <- switch(link,
+                            "identity" = clusterSum$y/clusterSum$total,
+                            "log" = log(clusterSum$y/clusterSum$total),
+                            "logit" = logit(clusterSum$y/clusterSum$total),
+                            "cloglog" = log(clusterSum$y/clusterSum$total))
+    # Trap any non-finite values
+    clusterSum$lp[!is.finite(clusterSum$lp)] <- NA
+    return(clusterSum)
+}
+
+
 
 wc_analysis <- function(analysis, design) {
     analysis$pt_ests <- analysis$int_ests <- y1 <- cluster <- y_off <- NULL
@@ -1149,7 +1161,7 @@ group_data <- function(analysis, distance = NULL, grouping = "quintiles"){
     if (link %in% c('log', 'cloglog')) {
         data <- data.frame(
             trial %>%
-            group_by(cat) %>%
+            dplyr::group_by(cat) %>%
             dplyr::summarize(
                 locations = dplyr::n(),
                 positives = sum(y1),
@@ -1161,7 +1173,7 @@ group_data <- function(analysis, distance = NULL, grouping = "quintiles"){
     } else if (link == 'logit') {
         data <- data.frame(
             trial %>%
-            group_by(cat) %>%
+            dplyr::group_by(cat) %>%
             dplyr::summarize(
                 locations = dplyr::n(),
                 d = median(d),
@@ -1176,7 +1188,7 @@ group_data <- function(analysis, distance = NULL, grouping = "quintiles"){
     } else if (link == 'identity') {
         # overall means and t-based confidence intervals by category
         data <- trial %>%
-            group_by(cat) %>%
+            dplyr::group_by(cat) %>%
             dplyr::summarize(
                 locations = dplyr::n(),
                 positives = sum(y1),
@@ -1202,42 +1214,56 @@ namedCL <- function(limits, alpha = alpha)
 
 
 # Minimal data description and crude effect_size estimate
-get_description <- function(trial, link, baselineOnly)
-    {
-    if(baselineOnly){
-        sum.numerators = sum(trial$y1)
-        sum.denominators = sum(trial$y_off)
-        description <- list(
-            sum.numerators = sum.numerators,
-            sum.denominators = sum.denominators,
-            controlY = sum.numerators/sum.denominators,
-            interventionY = NULL,
-            effect_size = NULL,
-            nclusters = max(as.numeric(as.character(trial$cluster))),
-            locations = nrow(trial)
-        )
+get_description <- function(trial, link, alpha, baselineOnly) {
+    lp <- arm <- NULL
+    if(baselineOnly) trial$arm <- "control"
+    clusterSum <- clusterSummary(trial = trial, link = "identity")
+    sum.numerators <- tapply(trial$y1, trial$arm, FUN = sum)
+    sum.denominators <- tapply(trial$y_off, trial$arm, FUN = sum)
+    ratio <- sum.numerators/sum.denominators
+    if(baselineOnly) {
+        controlY <- ratio[1]
+        effect_size <- interventionY <- NULL
     } else {
-        sum.numerators <- tapply(trial$y1, trial$arm, FUN = sum)
-        sum.denominators <- tapply(trial$y_off, trial$arm, FUN = sum)
-        ratio <- sum.numerators/sum.denominators
+        controlY <- ratio[1]
+        interventionY <- ratio[2]
         effect_size <- switch(link,
-               "identity" = ratio[2] - ratio[1],
-               "log" = 1 - ratio[2]/ratio[1],
-               "cloglog" = 1 - ratio[2]/ratio[1],
-               "logit" =  1 - ratio[2]/ratio[1])
-        description <- list(
-            sum.numerators = sum.numerators,
-            sum.denominators = sum.denominators,
-            controlY = ratio[1],
-            interventionY = ratio[2],
-            effect_size = effect_size,
-            nclusters = max(as.numeric(as.character(trial$cluster))),
-            locations = nrow(trial)
-        )
+           "identity" = ratio[2] - ratio[1],
+           "log" = 1 - ratio[2]/ratio[1],
+           "cloglog" = 1 - ratio[2]/ratio[1],
+           "logit" =  1 - ratio[2]/ratio[1])
     }
-    return(description)
+    means <- clusterSum %>% group_by(arm) %>% dplyr::summarize(lp = mean(lp))
+    deviations <- ifelse(clusterSum$arm == "control", clusterSum$lp - means$lp[1], clusterSum$lp - means$lp[2])
+    meanlp <- mean(ifelse(clusterSum$arm == "control", means$lp[1], means$lp[2]), na.rm = TRUE)
+    cv_percent <- sd(deviations, na.rm = TRUE)/meanlp * 100
+    cv_intervals <- cv_interval(K = cv_percent/100, n = nrow(clusterSum), alpha = alpha)
+    description <- list(
+        sum.numerators = sum.numerators,
+        sum.denominators = sum.denominators,
+        controlY = controlY,
+        interventionY = interventionY,
+        effect_size = effect_size,
+        nclusters = max(as.numeric(as.character(trial$cluster))),
+        cv_percent = cv_percent,
+        cv_lower = cv_intervals$lcl * 100,
+        cv_upper = cv_intervals$ucl * 100,
+        locations = nrow(trial)
+    )
+return(description)
 }
 
+cv_interval <- function(K, n, alpha) {
+    # Vangel (1996) method for interval estimates of the cv
+    # https://www.jstor.org/stable/2685039
+
+    u1 <- stats::qchisq(p = 1 - alpha/2, df = n - 1)
+    u2 <- stats::qchisq(p = alpha/2, df = n - 1)
+    lcl <- K/sqrt(((u1 + 2)/n - 1)* K^2 + u1/(n - 1))
+    ucl <- K/sqrt(((u2 + 2)/n - 1)* K^2 + u2/(n - 1))
+    value <- list(lcl = lcl, ucl = ucl)
+    return(value)
+}
 
 
 
@@ -1550,6 +1576,10 @@ summary.CRTanalysis <- function(object, ...) {
                     CLtext, unlist(object$int_ests$contralateral_spillover),")\n")
             }
         }
+        if (!is.null(object$description$cv_percent))
+            cat("Coefficient of variation: ", object$description$cv_percent,"%",
+                CLtext, object$description$cv_lower, object$description$cv_upper,")\n"
+            )
         if (!is.null(object$pt_ests$ICC))
         {
             cat(

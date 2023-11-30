@@ -435,7 +435,7 @@ removed</li>
 <span id="cb2-28"><a href="#cb2-28" tabindex="-1"></a></span>
 <span id="cb2-29"><a href="#cb2-29" tabindex="-1"></a><span class="co"># randomization and trial simulation</span></span>
 <span id="cb2-30"><a href="#cb2-30" tabindex="-1"></a>randomize_simulate <span class="ot">&lt;-</span> <span class="cf">function</span>(theta) {</span>
-<span id="cb2-31"><a href="#cb2-31" tabindex="-1"></a>  ex <span class="ot">&lt;-</span> <span class="fu">specify_clusters</span>(CRT, <span class="at">k =</span> k, <span class="at">algo =</span> <span class="st">&quot;kmeans&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb2-31"><a href="#cb2-31" tabindex="-1"></a>  ex <span class="ot">&lt;-</span> <span class="fu">specify_clusters</span>(CRT, <span class="at">c =</span> c, <span class="at">algo =</span> <span class="st">&quot;kmeans&quot;</span>) <span class="sc">%&gt;%</span></span>
 <span id="cb2-32"><a href="#cb2-32" tabindex="-1"></a>    <span class="fu">randomizeCRT</span>() <span class="sc">%&gt;%</span></span>
 <span id="cb2-33"><a href="#cb2-33" tabindex="-1"></a>    <span class="fu">simulateCRT</span>(<span class="at">effect =</span> <span class="fl">0.4</span>, <span class="at">generateBaseline =</span> <span class="cn">FALSE</span>, <span class="at">outcome0 =</span> outcome0,</span>
 <span id="cb2-34"><a href="#cb2-34" tabindex="-1"></a>                <span class="at">ICC_inp =</span> ICC, <span class="at">theta_inp =</span> theta,</span>

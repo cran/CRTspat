@@ -60,7 +60,7 @@ summary(exampleCRT)
 ## Coordinate system                      (x, y)            
 ## Not aggregated. Total records: 3172. Unique locations:          1181            
 ## Available clusters (across both arms)                           Not assigned            
-## Cluster randomization:                      Independently randomized            
+## No randomization          -            
 ## No power calculations to report          -            
 ## 
 ## Other variables in dataset
@@ -89,7 +89,7 @@ summary(example)
 ## Coordinate system                      (x, y)            
 ## Locations:                                                      1181            
 ## Available clusters (across both arms)                           Not assigned            
-## Cluster randomization:                      Independently randomized            
+## No randomization          -            
 ## No power calculations to report          -            
 ## 
 ## Other variables in dataset
@@ -131,7 +131,7 @@ summary(example_clustered)
 ## Available clusters (across both arms)                           24            
 ##   Per cluster mean number of points                             49.2            
 ##   Per cluster s.d. number of points                             3.9            
-## Cluster randomization:                      Independently randomized            
+## No randomization          -            
 ## No power calculations to report          -            
 ## 
 ## Other variables in dataset
@@ -165,15 +165,6 @@ baselineanalysis <- CRTanalysis(trial=example_clustered,
 
 ```
 ## Analysis of baseline only, using INLA
-```
-
-```
-## The legacy packages maptools, rgdal, and rgeos, underpinning the sp package,
-## which was just loaded, were retired in October 2023.
-## Please refer to R-spatial evolution reports for details, especially
-## https://r-spatial.org/r/2023/05/15/evolution4.html.
-## It may be desirable to make the sf package available;
-## package maintainers should consider adding sf to Suggests:.
 ```
 
 ```r
@@ -211,7 +202,7 @@ summary(example_randomized)
 ## Available clusters (across both arms)                           24            
 ##   Per cluster mean number of points                             49.2            
 ##   Per cluster s.d. number of points                             3.9            
-## S.D. of distance to nearest discordant location (km):           0.6          
+## S.D. of distance to nearest discordant location (km):           1.16          
 ## Cluster randomization:                      Matched pairs randomized            
 ## No power calculations to report          -            
 ## 

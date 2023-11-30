@@ -13,15 +13,16 @@ CRTpower(
   yC = NULL,
   outcome_type = "d",
   sigma2 = NULL,
-  phi = 1,
+  denominator = 1,
   N = 1,
   ICC = NULL,
-  k = NULL,
+  cv_percent = NULL,
+  c = NULL,
   sd_h = 0
 )
 }
 \arguments{
-\item{trial}{dataframe or \code{'CRTsp'} object containing Cartesian coordinates of locations in columns 'x' and 'y'.}
+\item{trial}{dataframe or \code{'CRTsp'} object: optional list of locations}
 
 \item{locations}{numeric: total number of units available for randomization (required if \code{trial} is not specified)}
 
@@ -31,9 +32,9 @@ CRTpower(
 
 \item{effect}{numeric: required effect size}
 
-\item{yC}{numeric: baseline value of outcome}
+\item{yC}{numeric: baseline (control) value of outcome}
 
-\item{outcome_type}{character with options -
+\item{outcome_type}{character: with options -
 \code{'y'}: continuous;
 \code{'n'}: count;
 \code{'e'}: event rate;
@@ -42,13 +43,15 @@ CRTpower(
 
 \item{sigma2}{numeric: variance of the outcome (required for \code{outcome_type = 'y'})}
 
-\item{phi}{numeric: overdispersion parameter (for \code{outcome_type = 'n'} or \code{outcome_type = 'e'})}
+\item{denominator}{numeric: rate multiplier (for \code{outcome_type = 'n'} or \code{outcome_type = 'e'})}
 
 \item{N}{numeric: mean of the denominator for proportions (for \code{outcome_type = 'p'})}
 
-\item{ICC}{numeric: Intra-Cluster Correlation}
+\item{ICC}{numeric: Intra-cluster correlation}
 
-\item{k}{integer: number of clusters in each arm (required if \code{trial} is not specified)}
+\item{cv_percent}{numeric: Coefficient of variation of the outcome (expressed as a percentage)}
+
+\item{c}{integer: number of clusters in each arm (required if \code{trial} is not specified)}
 
 \item{sd_h}{standard deviation of number of units per cluster (required if \code{trial} is not specified)}
 }
@@ -60,30 +63,38 @@ trial description and results of power calculations
 \code{CRTpower} carries out power and sample size calculations for CRTs.
 }
 \details{
-Power and sample size calculations are for a two-arm trial using the formulae of
-\href{https://bmcmedresmethodol.biomedcentral.com/articles/10.1186/1471-2288-11-102}{Hemming et al, 2011} which use a
-normal approximation for the inter-cluster variation. For counts
-or event rate data a quasi–Poisson model is assumed. The functions do not consider any loss
-in power due to contamination, loss to follow-up etc.
-If geolocations are not input power and sample size calculations are based on the scalar input parameters.\cr\cr
-If a trial dataframe or \code{'CRTsp'} object containing a pre-existing randomization is input then the
-numbers and sizes of clusters are in the input data are used to estimate the power. If buffer zones have been specified
-then separate calculations are made for the core area and for the full site\cr
-The output is an object of class \code{'CRTsp'} containing any input trial data.frame and values for:
+Power and sample size calculations are for an unmatched two-arm trial. For counts
+or event rate data the formula of \href{https://academic.oup.com/ije/article/28/2/319/655247}{Hayes & Bennett, 1999} is used. This requires as an input the
+between cluster coefficient of variation (\code{cv_percent}). For continuous outcomes and proportions the formulae of
+\href{https://bmcmedresmethodol.biomedcentral.com/articles/10.1186/1471-2288-11-102}{Hemming et al, 2011} are used. These make use of
+the intra-cluster correlation in the outcome (\code{ICC}) as an input. If the coefficient of variation and not the ICC is supplied then
+the intra-cluster correlation is computed from the coefficient of variation using the formulae
+from \href{https://www.taylorfrancis.com/books/mono/10.1201/9781584888178/cluster-randomised-trials-richard-hayes-lawrence-moulton}{Hayes & Moulton}. If incompatible values for \code{ICC} and \code{cv_percent} are supplied
+then the value of the \code{ICC} is used.\cr\cr
+The calculations do not consider any loss in power due to contamination, loss to follow-up etc..\cr\cr
+If geolocations are not input then power and sample size calculations are based on the scalar input parameters.\cr\cr
+If a trial dataframe or \code{'CRTsp'} object is input then this is used to determine the number of locations. If this input object
+contains cluster assignments then the numbers and sizes of clusters in the input data are used to estimate the power. If buffer zones have been specified
+then separate calculations are made for the core area and for the full site.\cr\cr
+The output is an object of class \code{'CRTsp'} containing any input trial dataframe and values for:
 \itemize{
 \item The required numbers of clusters to achieve the specified power.
 \item The design effect based on the input ICC.
-\item Calculations of the nominal power (ignoring any bias caused by contamination effects)\cr
+\item Calculations of the nominal power (ignoring any bias caused by contamination, loss to follow-up etc.)\cr
 }
 }
 \examples{
-{# Example without input geolocations
-examplePower1 = CRTpower(locations = 3000, ICC=0.10, effect=0.4, alpha = 0.05,
-    outcome_type = 'd', desiredPower = 0.8, yC=0.35, k = 20, sd_h=5)
+{# Power calculations for a binary outcome without input geolocations
+examplePower1 = CRTpower(locations = 3000, ICC = 0.10, effect = 0.4, alpha = 0.05,
+    outcome_type = 'd', desiredPower = 0.8, yC=0.35, c = 20, sd_h = 5)
 summary(examplePower1)
-# Example with input geolocations and randomisation
-examplePower2 = CRTpower(trial = readdata('example_site.csv'), desiredPower = 0.8,
-    effect=0.4, yC=0.35, outcome_type = 'd', ICC = 0.05, k = 20)
+# Power calculations for a rate outcome without input geolocations
+examplePower2 = CRTpower(locations = 2000, cv_percent = 40, effect = 0.4, denominator = 2.5,
+    alpha = 0.05, outcome_type = 'e', desiredPower = 0.8, yC = 0.35, c = 20, sd_h=5)
 summary(examplePower2)
+# Example with input geolocations and randomisation
+examplePower3 = CRTpower(trial = readdata('example_site.csv'), desiredPower = 0.8,
+    effect=0.4, yC=0.35, outcome_type = 'd', ICC = 0.05, c = 20)
+summary(examplePower3)
 }
 }

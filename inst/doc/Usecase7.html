@@ -370,7 +370,7 @@ distribution.</p>
 <span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
 <span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a>outcome0 <span class="ot">&lt;-</span> <span class="fl">0.4</span></span>
 <span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a>ICC <span class="ot">&lt;-</span> <span class="fl">0.05</span></span>
-<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a>k <span class="ot">&lt;-</span> <span class="dv">25</span></span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a>c <span class="ot">&lt;-</span> <span class="dv">25</span></span>
 <span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">7</span>)</span>
 <span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a>effect <span class="ot">&lt;-</span> <span class="fu">runif</span>(nsimulations,<span class="dv">0</span>,<span class="fl">0.6</span>)</span>
 <span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a><span class="co"># Data frame of input range of contamination</span></span>
@@ -379,7 +379,7 @@ distribution.</p>
 <p>A user function is defined for randomizing and analysing each
 simulated trial</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>CRTscenario7 <span class="ot">&lt;-</span> <span class="cf">function</span>(input) {</span>
-<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>      ex <span class="ot">&lt;-</span> <span class="fu">specify_clusters</span>(CRT, <span class="at">k =</span> k, <span class="at">algo =</span> <span class="st">&quot;kmeans&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>      ex <span class="ot">&lt;-</span> <span class="fu">specify_clusters</span>(CRT, <span class="at">c =</span> c, <span class="at">algo =</span> <span class="st">&quot;kmeans&quot;</span>) <span class="sc">%&gt;%</span></span>
 <span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>        <span class="fu">randomizeCRT</span>() <span class="sc">%&gt;%</span></span>
 <span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>        <span class="fu">simulateCRT</span>(<span class="at">effect =</span> input[[<span class="st">&quot;effect&quot;</span>]], <span class="at">generateBaseline =</span> <span class="cn">FALSE</span>, <span class="at">outcome0 =</span> outcome0,</span>
 <span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>                    <span class="at">ICC_inp =</span> ICC, <span class="at">theta_inp =</span> input[[<span class="st">&quot;theta_inp&quot;</span>]],</span>
@@ -390,7 +390,7 @@ simulated trial</p>
 <span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>    contaminate_pop_pr_sd <span class="ot">&lt;-</span> <span class="fu">sum</span>(<span class="fu">abs</span>(ex<span class="sc">$</span>trial<span class="sc">$</span>nearestDiscord) <span class="sc">&lt;</span></span>
 <span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>              input[[<span class="st">&quot;theta_inp&quot;</span>]]<span class="sc">/</span>(<span class="dv">2</span> <span class="sc">*</span> <span class="fu">qnorm</span>(<span class="fl">0.975</span>)))<span class="sc">/</span><span class="fu">nrow</span>(ex<span class="sc">$</span>trial)</span>
 <span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a>    examplePower <span class="ot">=</span> <span class="fu">CRTpower</span>(<span class="at">trial =</span> ex, <span class="at">desiredPower =</span> <span class="fl">0.8</span>,</span>
-<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a>                           <span class="at">effect=</span>input[[<span class="st">&quot;effect&quot;</span>]], <span class="at">yC=</span>outcome0, <span class="at">outcome_type =</span> <span class="st">&#39;d&#39;</span>, <span class="at">ICC =</span> ICC, <span class="at">k =</span> k)</span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a>                           <span class="at">effect=</span>input[[<span class="st">&quot;effect&quot;</span>]], <span class="at">yC=</span>outcome0, <span class="at">outcome_type =</span> <span class="st">&#39;d&#39;</span>, <span class="at">ICC =</span> ICC, <span class="at">c =</span> c)</span>
 <span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a>    nominalpower <span class="ot">&lt;-</span>  examplePower<span class="sc">$</span>geom_full<span class="sc">$</span>power</span>
 <span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a>    Tanalysis <span class="ot">&lt;-</span> <span class="fu">CRTanalysis</span>(ex, <span class="at">method =</span> <span class="st">&quot;T&quot;</span>)</span>
 <span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a>    value <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
