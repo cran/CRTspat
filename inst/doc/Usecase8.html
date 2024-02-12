@@ -343,28 +343,29 @@ scramble?</h1>
 
 <p>In trials of malaria interventions, a ‘fried-egg’ design is often
 used to avoid the downward bias in the estimates of efficacy caused by
-contamination. This entails estimating the outcome only from the cores
-of the clusters. However, the intervention must also be introduced in
-the buffer zone, so the trial may be very expensive if there are high
-per capita intervention costs. Since the buffer zone is excluded from
-data collection, there are usually no data on whether the buffer is
-large enough to avoid contamination effects. A precautionary approach
-with large buffer zones is therefore the norm. However with ‘fried-eggs’
-there are no data on the scale of the contamination, so if the effect
-was swamped by unexpectedly large contamination, this would be
-indistinguishable from failure of the intervention.</p>
+spillover. This entails estimating the outcome only from the cores of
+the clusters. However, the intervention must also be introduced in the
+buffer zone, so the trial may be very expensive if there are high per
+capita intervention costs. Since the buffer zone is excluded from data
+collection, there are usually no data on whether the buffer is large
+enough to avoid spillover effects. A precautionary approach with large
+buffer zones is therefore the norm. However with ‘fried-eggs’ there are
+no data on the scale of the spillover, so if the effect was swamped by
+unexpectedly large spillover, this would be indistinguishable from
+failure of the intervention.</p>
 <p>The alternative design is to sample in the buffer zones, accepting
-some degree of contamination. The data analysis might then be used to
-estimate the scale of contamination (see <a href="Usecase5.html">Use
-Case 5</a>). The statistical model might be to adjust the estimate of
-effect size for the contamination effect, or to decide which
-contaminated areas to exclude <em>post hoc</em> from the definitive
-analysis (based on pre-defined criteria). This is expected to lead to
-some loss of power, compared to collecting the same amount of outcome
-data from the core area alone (though this might be compensated for by
-increasing data collection), but is likely to be less complicated to
-organise, allowing the trial to be carried out over a much smaller area,
-with far fewer locations needing to be randomized (see <a href="Usecase4.html">Use Case 4</a>).</p>
+some degree of spillover. The data analysis might then be used to
+estimate the scale of spillover (see <a href="Usecase5.html">Use Case
+5</a>). The statistical model might be to adjust the estimate of effect
+size for the spillover effect, or to decide which contaminated areas to
+exclude <em>post hoc</em> from the definitive analysis (based on
+pre-defined criteria). This is expected to lead to some loss of power,
+compared to collecting the same amount of outcome data from the core
+area alone (though this might be compensated for by increasing data
+collection), but is likely to be less complicated to organise, allowing
+the trial to be carried out over a much smaller area, with far fewer
+locations needing to be randomized (see <a href="Usecase4.html">Use Case
+4</a>).</p>
 <p>In this example, the effects of reducing the numbers of observations
 on power and bias are evaluated in simulated datasets. To compare
 ‘fried-egg’ strategies with comparable designs that sample the whole
@@ -375,8 +376,7 @@ homogeneous background disease rates are assigned, using
 <code>propensity &lt;- 1</code>, fixed values are used for the outcome
 in the control arm, the target ICC of the simulations and the number of
 clusters in each arm of the trial. Efficacy is also fixed at 0.4. The
-contamination interval is sampled from a uniform(0, 1.5km)
-distribution.</p>
+spillover interval is sampled from a uniform(0, 1.5km) distribution.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(CRTspat)</span>
 <span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="co"># use the locations only from example dataset (as with Use Case 7)</span></span>
 <span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>example <span class="ot">&lt;-</span> <span class="fu">readdata</span>(<span class="st">&quot;exampleCRT.txt&quot;</span>)</span>
@@ -479,7 +479,7 @@ is very small)</p>
 <span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a>fig8_1b <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(<span class="at">data =</span> results, <span class="fu">aes</span>(<span class="at">x =</span> theta_inp, <span class="at">y =</span> significant, <span class="at">color =</span> <span class="fu">factor</span>(fried))) <span class="sc">+</span></span>
 <span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">size =</span> <span class="dv">2</span>, <span class="at">se =</span> <span class="cn">FALSE</span>, <span class="at">show.legend =</span> <span class="cn">FALSE</span>, <span class="at">method =</span> <span class="st">&quot;loess&quot;</span>, <span class="at">span =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
 <span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a>  <span class="fu">scale_colour_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">&quot;#b2df8a&quot;</span>,<span class="st">&quot;#D55E00&quot;</span>,<span class="st">&quot;#0072A7&quot;</span>)) <span class="sc">+</span></span>
-<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a>    <span class="fu">xlab</span>(<span class="st">&#39;Simulated contamination range (km)&#39;</span>) <span class="sc">+</span></span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a>    <span class="fu">xlab</span>(<span class="st">&#39;Simulated spillover interval (km)&#39;</span>) <span class="sc">+</span></span>
 <span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a>    <span class="fu">ylab</span>(<span class="st">&#39;Power&#39;</span>)</span>
 <span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a>fig8_1c <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(<span class="at">data =</span> results, <span class="fu">aes</span>(<span class="at">x =</span> observations, <span class="at">y =</span> bias, <span class="at">color =</span> <span class="fu">factor</span>(fried))) <span class="sc">+</span></span>
 <span id="cb5-18"><a href="#cb5-18" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">size =</span> <span class="dv">2</span>, <span class="at">se =</span> <span class="cn">FALSE</span>, <span class="at">show.legend =</span> <span class="cn">FALSE</span>, <span class="at">method =</span> <span class="st">&quot;loess&quot;</span>, <span class="at">span =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
@@ -489,7 +489,7 @@ is very small)</p>
 <span id="cb5-22"><a href="#cb5-22" tabindex="-1"></a>fig8_1d <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(<span class="at">data =</span> results, <span class="fu">aes</span>(<span class="at">x =</span> theta_inp, <span class="at">y =</span> bias, <span class="at">color =</span> <span class="fu">factor</span>(fried))) <span class="sc">+</span></span>
 <span id="cb5-23"><a href="#cb5-23" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">size =</span> <span class="dv">2</span>, <span class="at">se =</span> <span class="cn">FALSE</span>, <span class="at">show.legend =</span> <span class="cn">FALSE</span>, <span class="at">method =</span> <span class="st">&quot;loess&quot;</span>, <span class="at">span =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
 <span id="cb5-24"><a href="#cb5-24" tabindex="-1"></a>  <span class="fu">scale_colour_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">&quot;#b2df8a&quot;</span>,<span class="st">&quot;#D55E00&quot;</span>,<span class="st">&quot;#0072A7&quot;</span>)) <span class="sc">+</span></span>
-<span id="cb5-25"><a href="#cb5-25" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">&#39;Simulated contamination range (km)&#39;</span>) <span class="sc">+</span></span>
+<span id="cb5-25"><a href="#cb5-25" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">&#39;Simulated spillover interval (km)&#39;</span>) <span class="sc">+</span></span>
 <span id="cb5-26"><a href="#cb5-26" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">&#39;Bias&#39;</span>)</span>
 <span id="cb5-27"><a href="#cb5-27" tabindex="-1"></a><span class="fu">library</span>(cowplot)</span>
 <span id="cb5-28"><a href="#cb5-28" tabindex="-1"></a><span class="fu">plot_grid</span>(fig8_1a, fig8_1b, fig8_1c, fig8_1d, <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">&#39;a&#39;</span>, <span class="st">&#39;b&#39;</span>, <span class="st">&#39;c&#39;</span>, <span class="st">&#39;d&#39;</span>), <span class="at">label_size =</span> <span class="dv">14</span>, <span class="at">ncol =</span> <span class="dv">2</span>)</span></code></pre></div>
@@ -504,15 +504,14 @@ suggestion that there is a maximum at a sample size of about 900
 locations is presumably an effect of the smoothing of the results). The
 ‘scrambled’ egg trials lose power with each reduction in the number of
 observations (Figure 8.1a), but substantive loss of power occurs only
-with contamination range of 1 km or more in this dataset. The fried egg
+with spillover interval of 1 km or more in this dataset. The fried egg
 designs largely avoid this loss of power (Figure 8.1b) but are less
-powerful on average when the contamination range is less that 0.5
-km.</p>
+powerful on average when the spillover interval is less that 0.5 km.</p>
 <p>In these simulations, the lme4 estimates of the efficacy are biased
 slightly downwards (i.e. the bias has negative sign). The absolute bias
 was least when some of the locations were excluded (Figure 8.1c). There
 is less absolute bias with the fried-egg designs but the effect is small
-except when the simulated contamination range is very large (Figure
+except when the simulated spillover interval is very large (Figure
 8.1d). The difference in bias between ‘fried’ and ‘scrambled’ egg
 designs is modest in relation to the scale of the overall bias.</p>
 <p>

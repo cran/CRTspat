@@ -202,7 +202,7 @@ summary(example_randomized)
 ## Available clusters (across both arms)                           24            
 ##   Per cluster mean number of points                             49.2            
 ##   Per cluster s.d. number of points                             3.9            
-## S.D. of distance to nearest discordant location (km):           1.16          
+## S.D. of distance to nearest discordant location (km):           0.56          
 ## Cluster randomization:                      Matched pairs randomized            
 ## No power calculations to report          -            
 ## 

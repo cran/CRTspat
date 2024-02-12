@@ -12,7 +12,7 @@
 
 
 
-<title>Use Case 05: Analysis of trials (including methods for analysing contamination)</title>
+<title>Use Case 05: Analysis of trials (including methods for analysing spillover)</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -337,7 +337,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 
 <h1 class="title toc-ignore">Use Case 05: Analysis of trials (including
-methods for analysing contamination)</h1>
+methods for analysing spillover)</h1>
 
 
 
@@ -417,31 +417,31 @@ the <code>method</code> argument of the function.</p>
 <td><a href="https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/t.test">t.test</a></td>
 <td>P-values and confidence intervals for efficacy based on comparison
 of cluster means</td>
-<td>No analysis of contamination or degree of clustering</td>
+<td>No analysis of spillover or degree of clustering</td>
 </tr>
 <tr class="even">
 <td><code>GEE</code></td>
 <td><a href="https://www.jstatsoft.org/article/view/v015i02">geepack</a></td>
 <td>Interval estimates for efficacy and Intra-cluster correlations</td>
-<td>No analysis of contamination or degree of clustering</td>
+<td>No analysis of spillover or degree of clustering</td>
 </tr>
 <tr class="odd">
 <td><code>LME4</code></td>
 <td><a href="https://CRAN.R-project.org/package=lme4">lme4</a></td>
-<td>Analysis of contamination</td>
+<td>Analysis of spillover</td>
 <td>No geostatistical analysis</td>
 </tr>
 <tr class="even">
 <td><code>INLA</code></td>
 <td><a href="https://www.r-inla.org/">INLA</a></td>
-<td>Analysis of contamination, geostatistical analysis and spatially
+<td>Analysis of spillover, geostatistical analysis and spatially
 structured outputs</td>
 <td>Computationally intensive</td>
 </tr>
 <tr class="odd">
 <td><code>MCMC</code></td>
 <td><a href="https://CRAN.R-project.org/package=jagsUI">jagsUI</a></td>
-<td>Interval estimates for contamination parameters</td>
+<td>Interval estimates for spillover parameters</td>
 <td>Identifiability issues and slow convergence are possible</td>
 </tr>
 </tbody>
@@ -465,7 +465,7 @@ or <code>summary(&quot;&lt;analysis&gt;$model_object&quot;)</code>.</p>
 ## Analysis method:  T 
 ## Link function:  logit 
 ## Model formula:  arm + (1 | cluster) 
-## No modelling of contamination 
+## No modelling of spillover 
 ## Estimates:       Control:  0.364  (95% CL:  0.286 0.451 )
 ##             Intervention:  0.21  (95% CL:  0.147 0.292 )
 ##                 Efficacy:  0.423  (95% CL:  0.208 0.727 )
@@ -496,18 +496,18 @@ comparison of results with <code>cfunc = &quot;X&quot;</code> and
 <code>cfunc = &quot;Z&quot;</code> is used to assess whether the intervention
 effect is likely to be due to chance. With <code>method = &quot;T&quot;</code>,
 <code>cfunc = &quot;X&quot;</code> provides a significance test of the
-intervention effect directly. The models with contamination (see below)
-can be compared by that with <code>cfunc = &quot;X&quot;</code> to evaluate
-whether contamination has led to an important bias.</p>
+intervention effect directly. The models with spillover (see below) can
+be compared by that with <code>cfunc = &quot;X&quot;</code> to evaluate whether
+spillover has led to an important bias.</p>
 </div>
-<div id="contamination-spillover" class="section level2">
-<h2>Contamination (spillover)</h2>
-<p><code>CRTanalysis()</code> provides options for analysing
-contamination between arms, or spillover effects either as function of a
-Euclidean distance or as a function of a surround measure:</p>
+<div id="spillover" class="section level2">
+<h2>Spillover</h2>
+<p><code>CRTanalysis()</code> provides options for analysing spillover
+effects either as function of a Euclidean distance or as a function of a
+surround measure:</p>
 <div id="models-that-do-not-consider-spillover" class="section level4">
 <h4>Models that do not consider spillover</h4>
-<p>Models that do not consider contamination can be fitted using options
+<p>Models that do not consider spillover can be fitted using options
 <code>Z</code> and <code>X</code>. These are included both to allow
 conventional analyses (see above), and also to enable model selection
 using and likelihood ratio tests, the Akaike information criterion
@@ -521,7 +521,7 @@ the trial arms, with locations in the control arm assigned negative
 values, and those in the intervention arm assigned positive values. The
 functional forms for this relationship is specified by the value of
 <code>cfunc</code> (Table 5.2).</p>
-<p>Table 5.2. Available contamination functions</p>
+<p>Table 5.2. Available spillover functions</p>
 <table>
 <colgroup>
 <col width="11%" />
@@ -590,14 +590,13 @@ min(d)}{max(d)\ -\ min(d)}\)</span></td>
 </tbody>
 </table>
 <p><code>cfunc</code> options <code>P</code>, <code>L</code> and
-<code>S</code> lead to non-linear models in which the contamination
-scale parameter (<code>S</code>) must be estimated. This is done by
-selecting <code>scale_par</code> using a one-dimensional optimisation of
-the goodness of fit of the model in <code>stats::optimize()</code>.</p>
+<code>S</code> lead to non-linear models in which the spillover scale
+parameter (<code>S</code>) must be estimated. This is done by selecting
+<code>scale_par</code> using a one-dimensional optimisation of the
+goodness of fit of the model in <code>stats::optimize()</code>.</p>
 <p>The different values for <code>cfunc</code> lead to the fitted curves
 shown in Figure 5.1. The light blue shaded part of the plot corresponds
-to the contamination interval in those cases where this is
-estimated.</p>
+to the spillover interval in those cases where this is estimated.</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>analysisLME4_Z <span class="ot">&lt;-</span> <span class="fu">CRTanalysis</span>(example, <span class="at">method =</span> <span class="st">&quot;LME4&quot;</span>, <span class="at">cfunc =</span> <span class="st">&quot;Z&quot;</span>)</span>
 <span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="fu">summary</span>(analysisLME4_Z)</span></code></pre></div>
 <pre><code>## 
@@ -617,7 +616,7 @@ estimated.</p>
 ## Analysis method:  LME4 
 ## Link function:  logit 
 ## Model formula:  arm + (1 | cluster) 
-## No modelling of contamination 
+## No modelling of spillover 
 ## Estimates:       Control:  0.366  (95% CL:  0.292 0.449 )
 ##             Intervention:  0.216  (95% CL:  0.162 0.281 )
 ##                 Efficacy:  0.41  (95% CL:  0.165 0.584 )
@@ -633,18 +632,18 @@ estimated.</p>
 ## Measure of distance or surround: Signed distance to other arm (km)
 ## Estimated scale parameter: 0.45
 ## Model formula:  pvar + (1 | cluster) 
-## Error function model for contamination
+## Error function model for spillover
 ## Estimates:       Control:  0.418  (95% CL:  0.331 0.509 )
 ##             Intervention:  0.186  (95% CL:  0.136 0.25 )
 ##                 Efficacy:  0.553  (95% CL:  0.327 0.703 )
-## Contamination range(km):  4.22  (95% CL:  4.2 4.23 )
+## spillover interval(km):    4.22  (95% CL:  4.2 4.23 )
 ## % locations contaminated: 91.6  (95% CL:  90.6 92 %)
 ## Total effect            : 0.23  (95% CL:  0.114 0.344 )
 ## Ipsilateral Spillover   : 0.0233  (95% CL:  0.0127 0.0323 )
 ## Contralateral Spillover : 0.0417  (95% CL:  0.0192 0.0651 )
 ## Coefficient of variation:  41.6 %  (95% CL:  31.2 63.1 )
 ## deviance:  1374.215 
-## AIC     :  1382.215 including penalty for the contamination scale parameter</code></pre>
+## AIC     :  1382.215 including penalty for the spillover scale parameter</code></pre>
 <div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>analysisLME4_L <span class="ot">&lt;-</span> <span class="fu">CRTanalysis</span>(example, <span class="at">method =</span> <span class="st">&quot;LME4&quot;</span>, <span class="at">cfunc =</span> <span class="st">&quot;L&quot;</span>)</span>
 <span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a><span class="fu">summary</span>(analysisLME4_L)</span></code></pre></div>
 <pre><code>## 
@@ -654,18 +653,18 @@ estimated.</p>
 ## Measure of distance or surround: Signed distance to other arm (km)
 ## Estimated scale parameter: 0.249
 ## Model formula:  pvar + (1 | cluster) 
-## Sigmoid (logistic) function for contamination
+## Sigmoid (logistic) function for spillover
 ## Estimates:       Control:  0.417  (95% CL:  0.332 0.51 )
 ##             Intervention:  0.186  (95% CL:  0.136 0.249 )
 ##                 Efficacy:  0.552  (95% CL:  0.329 0.7 )
-## Contamination range(km):  4.26  (95% CL:  4.24 4.28 )
+## spillover interval(km):    4.26  (95% CL:  4.24 4.28 )
 ## % locations contaminated: 92.7  (95% CL:  92.2 93.1 %)
 ## Total effect            : 0.229  (95% CL:  0.115 0.342 )
 ## Ipsilateral Spillover   : 0.0219  (95% CL:  0.0121 0.0304 )
 ## Contralateral Spillover : 0.0388  (95% CL:  0.0183 0.0604 )
 ## Coefficient of variation:  41.6 %  (95% CL:  31.2 63.1 )
 ## deviance:  1374.201 
-## AIC     :  1382.201 including penalty for the contamination scale parameter</code></pre>
+## AIC     :  1382.201 including penalty for the spillover scale parameter</code></pre>
 <div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a>analysisLME4_S <span class="ot">&lt;-</span> <span class="fu">CRTanalysis</span>(example, <span class="at">method =</span> <span class="st">&quot;LME4&quot;</span>, <span class="at">cfunc =</span> <span class="st">&quot;S&quot;</span>)</span>
 <span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a><span class="fu">summary</span>(analysisLME4_S)</span></code></pre></div>
 <pre><code>## 
@@ -675,18 +674,18 @@ estimated.</p>
 ## Measure of distance or surround: Signed distance to other arm (km)
 ## Estimated scale parameter: 1.674
 ## Model formula:  pvar + (1 | cluster) 
-## Piecewise linear function for contamination
+## Piecewise linear function for spillover
 ## Estimates:       Control:  0.423  (95% CL:  0.334 0.516 )
 ##             Intervention:  0.185  (95% CL:  0.135 0.247 )
 ##                 Efficacy:  0.561  (95% CL:  0.341 0.711 )
-## Contamination range(km):  4.1  (95% CL:  4.1 4.11 )
+## spillover interval(km):    4.1  (95% CL:  4.1 4.11 )
 ## % locations contaminated: 86.6  (95% CL:  86.6 87.1 %)
 ## Total effect            : 0.237  (95% CL:  0.12 0.356 )
 ## Ipsilateral Spillover   : 0.029  (95% CL:  0.016 0.0403 )
 ## Contralateral Spillover : 0.0522  (95% CL:  0.0248 0.0818 )
 ## Coefficient of variation:  41.6 %  (95% CL:  31.2 63.1 )
 ## deviance:  1374.094 
-## AIC     :  1382.094 including penalty for the contamination scale parameter</code></pre>
+## AIC     :  1382.094 including penalty for the spillover scale parameter</code></pre>
 <div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a>analysisLME4_R <span class="ot">&lt;-</span> <span class="fu">CRTanalysis</span>(example, <span class="at">method =</span> <span class="st">&quot;LME4&quot;</span>, <span class="at">cfunc =</span> <span class="st">&quot;R&quot;</span>)</span>
 <span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a><span class="fu">summary</span>(analysisLME4_R)</span></code></pre></div>
 <pre><code>## 
@@ -696,11 +695,11 @@ estimated.</p>
 ## Measure of distance or surround: Signed distance to other arm (km)
 ## No non-linear parameter. 1
 ## Model formula:  pvar + (1 | cluster) 
-## Rescaled linear function for contamination
+## Rescaled linear function for spillover
 ## Estimates:       Control:  0.584  (95% CL:  0.381 0.758 )
 ##             Intervention:  0.116  (95% CL:  0.0587 0.216 )
 ##                 Efficacy:  0.801  (95% CL:  0.465 0.92 )
-## Contamination range(km):  6.64  (95% CL:  6.61 6.65 )
+## spillover interval(km):    6.64  (95% CL:  6.61 6.65 )
 ## % locations contaminated: 99.8  (95% CL:  99.8 99.8 %)
 ## Total effect            : 0.468  (95% CL:  0.181 0.694 )
 ## Ipsilateral Spillover   : 0.117  (95% CL:  0.0564 0.157 )
@@ -720,14 +719,14 @@ estimated.</p>
 <img src="data:image/png;base64,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"> <br> <em>Fig 5.1 Fitted curves for the
 example dataset with different options for <code>cfunc</code></em>
 </p>
-<p>The piecewise linear contamination function,
-<code>cfunc = &quot;S&quot;</code>, is only linear on the scale of the linear
-predictor. When used in a logistic model, as here, the transformation
-via the inverse of the link function leads to a slightly curved plot
-(Figure 5.1S). The rescaled linear function, <code>cfunc = &quot;R&quot;</code>,
-is provided as a comparator and for use with <code>distance</code>
-values other than <code>distance = &quot;nearestDiscord&quot;</code> see below (it
-should not be used to estimate the contamination range).</p>
+<p>The piecewise linear spillover function, <code>cfunc = &quot;S&quot;</code>, is
+only linear on the scale of the linear predictor. When used in a
+logistic model, as here, the transformation via the inverse of the link
+function leads to a slightly curved plot (Figure 5.1S). The rescaled
+linear function, <code>cfunc = &quot;R&quot;</code>, is provided as a comparator
+and for use with <code>distance</code> values other than
+<code>distance = &quot;nearestDiscord&quot;</code> see below (it should not be
+used to estimate the spillover interval).</p>
 <p>The full set of different <code>cfunc</code> options are available
 for each of model options <code>&quot;LME4&quot;</code>, <code>&quot;INLA&quot;</code>, and
 <code>&quot;MCMC&quot;</code>. The performance of all these different models has
@@ -735,12 +734,12 @@ not yet been thoroughly investigated. The analyses of <a href="https://malariajo
 <em>et al.</em> (2021b)</a> found that that a model equivalent to
 <code>method = &quot;MCMC&quot;</code>, <code>cfunc = &quot;L&quot;</code> gave estimates of
 efficacy with low bias, even in simulations with considerable
-contamination.</p>
+spillover.</p>
 </div>
 <div id="spillover-as-a-function-of-surround" class="section level4">
 <h4>Spillover as a function of surround</h4>
-<p>Contamination can also be analysed by assuming the effect size to be
-a function of the number of intervened locations in the surroundings of
+<p>Spillover can also be analysed by assuming the effect size to be a
+function of the number of intervened locations in the surroundings of
 the location <a href="https://onlinelibrary.wiley.com/doi/full/10.1111/biom.13316">Anaya-Izquierdo
 &amp; Alexander(2021)</a>. Several different surround functions are
 available. These are specified by the <code>distance</code> parameter
@@ -834,11 +833,11 @@ parameter in other models (see above Table 5.2).</p>
 ## Measure of distance or surround: Tukey half-depth 
 ## No non-linear parameter. 1
 ## Model formula:  pvar + (1 | cluster) 
-## Rescaled linear function for contamination
+## Rescaled linear function for spillover
 ## Estimates:       Control:  0.381  (95% CL:  0.292 0.478 )
 ##             Intervention:  0.209  (95% CL:  0.15 0.282 )
 ##                 Efficacy:  0.452  (95% CL:  0.167 0.639 )
-## Contamination range(km):  0.978  (95% CL:  0.976 0.98 )
+## spillover interval(km):    0.978  (95% CL:  0.976 0.98 )
 ## % locations contaminated: 55  (95% CL:  55 55 %)
 ## Total effect            : 0.172  (95% CL:  0.0524 0.292 )
 ## Ipsilateral Spillover   : 0.0313  (95% CL:  0.01 0.0512 )
@@ -856,11 +855,11 @@ parameter in other models (see above Table 5.2).</p>
 ## Measure of distance or surround: Simplicial depth 
 ## No non-linear parameter. 1
 ## Model formula:  pvar + (1 | cluster) 
-## Rescaled linear function for contamination
+## Rescaled linear function for spillover
 ## Estimates:       Control:  0.393  (95% CL:  0.307 0.485 )
 ##             Intervention:  0.199  (95% CL:  0.145 0.268 )
 ##                 Efficacy:  0.493  (95% CL:  0.243 0.66 )
-## Contamination range(km):  0.978  (95% CL:  0.976 0.98 )
+## spillover interval(km):    0.978  (95% CL:  0.976 0.98 )
 ## % locations contaminated: 52.4  (95% CL:  52.2 52.4 %)
 ## Total effect            : 0.193  (95% CL:  0.0802 0.306 )
 ## Ipsilateral Spillover   : 0.0299  (95% CL:  0.013 0.0456 )
@@ -878,11 +877,11 @@ parameter in other models (see above Table 5.2).</p>
 ## Measure of distance or surround: disc of radius 0.15 km
 ## Precalculated scale parameter: 0.15
 ## Model formula:  pvar + (1 | cluster) 
-## Rescaled linear function for contamination
+## Rescaled linear function for spillover
 ## Estimates:       Control:  0.387  (95% CL:  0.312 0.467 )
 ##             Intervention:  0.2  (95% CL:  0.149 0.26 )
 ##                 Efficacy:  0.482  (95% CL:  0.273 0.634 )
-## Contamination range(km):  0.978  (95% CL:  0.976 0.98 )
+## spillover interval(km):    0.978  (95% CL:  0.976 0.98 )
 ## % locations contaminated: 8.89  (95% CL:  8.89 8.89 %)
 ## Total effect            : 0.186  (95% CL:  0.0912 0.282 )
 ## Ipsilateral Spillover   : 0.00458  (95% CL:  0.00239 0.00656 )
@@ -900,11 +899,11 @@ parameter in other models (see above Table 5.2).</p>
 ## Measure of distance or surround: kern with kernel s.d. 0.15 km
 ## Precalculated scale parameter: 0.15
 ## Model formula:  pvar + (1 | cluster) 
-## Rescaled linear function for contamination
+## Rescaled linear function for spillover
 ## Estimates:       Control:  0.406  (95% CL:  0.327 0.491 )
 ##             Intervention:  0.185  (95% CL:  0.136 0.245 )
 ##                 Efficacy:  0.542  (95% CL:  0.349 0.684 )
-## Contamination range(km):  0.979  (95% CL:  0.977 0.98 )
+## spillover interval(km):    0.979  (95% CL:  0.977 0.98 )
 ## % locations contaminated: 50.8  (95% CL:  50.6 50.9 %)
 ## Total effect            : 0.22  (95% CL:  0.122 0.32 )
 ## Ipsilateral Spillover   : 0.011  (95% CL:  0.00661 0.0152 )

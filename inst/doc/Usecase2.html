@@ -12,7 +12,7 @@
 
 
 
-<title>Use Case 02: Simulation of trials with geographical contamination</title>
+<title>Use Case 02: Simulation of trials with geographical spillover</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -337,15 +337,15 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 
 <h1 class="title toc-ignore">Use Case 02: Simulation of trials with
-geographical contamination</h1>
+geographical spillover</h1>
 
 
 
 <p>Effects of settlement patterns, choices of cluster size and buffer
-widths, and the extent of contamination between arms on the outcomes of
-CRTs do not lend themselves to mathematical analysis. Simulations of
-trials are used to explore the effects of these variables on trial power
-and on the robustness of statistical methodologies.</p>
+widths, and the extent of spillover between arms on the outcomes of CRTs
+do not lend themselves to mathematical analysis. Simulations of trials
+are used to explore the effects of these variables on trial power and on
+the robustness of statistical methodologies.</p>
 <p>Trials can be simulated using the <code>simulateCRT</code> function,
 which augments a <code>trial</code> data frame (created externally) or
 object of class <code>CRTsp</code> (created by package functions) with
@@ -389,10 +389,10 @@ data</td>
 <tr class="odd">
 <td align="left">Neither baseline data nor <code>propensity</code> are
 supplied</td>
-<td align="left"><code>propensity</code> is generated as a normal
-kernel, with the bandwidth adjusted to achieve the input value of the
+<td align="left"><code>propensity</code> is generated using normal
+kernels, with the bandwidth adjusted to achieve the input value of the
 <code>ICC_inp</code> (after the further smoothing stage to simulate
-contamination (see below))</td>
+spillover (see below))</td>
 </tr>
 </tbody>
 </table>
@@ -402,8 +402,8 @@ between trial arms is then modelled as a additional smoothing process
 applied to the intervention-adjusted <code>propensity</code> via a
 further bivariate normal kernel. In the case of mosquito borne disease
 this is proposed as an approximation to the effect of mosquito movement.
-The degree of spillover is specified either as a contamination range
-with the <code>theta_inp</code> parameter, or as <code>sd</code>, the
+The degree of spillover is specified either as a spillover interval with
+the <code>theta_inp</code> parameter, or as <code>sd</code>, the
 bandwidth of the corresponding normal kernel. If both are provided then
 it is the value of <code>theta_inp</code> that is used.</p>
 <div id="example-with-baseline-data-provided-as-proportions" class="section level4">
@@ -470,7 +470,7 @@ it is the value of <code>theta_inp</code> that is used.</p>
 ## No power calculations to report          -            
 ## 
 ## Other variables in dataset
-## --------------------------          RDT_test_result  base_denom  denom  kernelID  propensity  num</code></pre>
+## --------------------------          RDT_test_result  base_denom  denom  propensity  num</code></pre>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">library</span>(Matrix)</span>
 <span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>examplemesh100 <span class="ot">&lt;-</span> <span class="fu">readdata</span>(<span class="st">&quot;examplemesh100.rds&quot;</span>)</span>
 <span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>example2aanalysis <span class="ot">&lt;-</span> <span class="fu">CRTanalysis</span>(<span class="at">trial=</span>example2a, <span class="at">method =</span> <span class="st">&#39;T&#39;</span>)</span>
@@ -480,13 +480,13 @@ it is the value of <code>theta_inp</code> that is used.</p>
 ## Analysis method:  T 
 ## Link function:  logit 
 ## Model formula:  arm + (1 | cluster) 
-## No modelling of contamination 
-## Estimates:       Control:  0.454  (95% CL:  0.402 0.506 )
-##             Intervention:  0.128  (95% CL:  0.0833 0.191 )
-##                 Efficacy:  0.719  (95% CL:  0.712 0.892 )
-## Coefficient of variation:  28.6 %  (95% CL:  21.9 41.5 )
+## No modelling of spillover 
+## Estimates:       Control:  0.376  (95% CL:  0.286 0.475 )
+##             Intervention:  0.195  (95% CL:  0.133 0.278 )
+##                 Efficacy:  0.48  (95% CL:  0.28 0.774 )
+## Coefficient of variation:  39.7 %  (95% CL:  29.9 59.8 )
 ##  
-## P-value (2-sided):  2.450413e-07</code></pre>
+## P-value (2-sided):  0.0036424</code></pre>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">plotCRT</span>(example2aanalysis)</span>
 <span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>example2aINLA <span class="ot">&lt;-</span> <span class="fu">CRTanalysis</span>(<span class="at">trial=</span>example2a,</span>
 <span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>                 <span class="at">method =</span> <span class="st">&#39;INLA&#39;</span>, <span class="at">link=</span><span class="st">&#39;logit&#39;</span>, <span class="at">cfunc =</span> <span class="st">&#39;Z&#39;</span>,</span>
@@ -526,7 +526,8 @@ geostatistical model</em>
 <pre><code>## 
 ## =====================    SIMULATION OF CLUSTER RANDOMISED TRIAL    =================</code></pre>
 <pre><code>## Estimating the smoothing required to achieve the target ICC of 0.05</code></pre>
-<pre><code>## </code></pre>
+<pre><code>## 
+bandwidth: 1  ICC = 0.0460233924407313 loss = 1.58134076804332e-05 </code></pre>
 <div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="fu">summary</span>(example2b)</span></code></pre></div>
 <pre><code>## ===============================CLUSTER RANDOMISED TRIAL ===========================
 ## 
@@ -558,12 +559,12 @@ geostatistical model</em>
 ## Analysis method:  GEE 
 ## Link function:  logit 
 ## Model formula:  arm 
-## No modelling of contamination 
-## Estimates:       Control:  0.451  (95% CL:  0.395 0.508 )
-##             Intervention:  0.149  (95% CL:  0.123 0.179 )
-##                 Efficacy:  0.67  (95% CL:  0.586 0.735 )
-## Coefficient of variation:  38.6 %  (95% CL:  31.5 50 )
-## Intracluster correlation (ICC)  :  0.0389  (95% CL:  0.018 0.0598 )
+## No modelling of spillover 
+## Estimates:       Control:  0.461  (95% CL:  0.402 0.521 )
+##             Intervention:  0.139  (95% CL:  0.113 0.17 )
+##                 Efficacy:  0.698  (95% CL:  0.615 0.764 )
+## Coefficient of variation:  40.5 %  (95% CL:  33 52.7 )
+## Intracluster correlation (ICC)  :  0.046  (95% CL:  0.019 0.073 )
 ## </code></pre>
 <div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a><span class="fu">plotCRT</span>(example2b, <span class="at">map =</span> <span class="cn">TRUE</span>, <span class="at">fill =</span> <span class="st">&#39;clusters&#39;</span>, <span class="at">showClusterLabels =</span> <span class="cn">TRUE</span>, <span class="at">maskbuffer =</span> <span class="fl">0.5</span>)</span></code></pre></div>
 <p>
@@ -589,7 +590,8 @@ overall initial prevalence and ICC</h4>
 <pre><code>## 
 ## =====================    SIMULATION OF CLUSTER RANDOMISED TRIAL    =================</code></pre>
 <pre><code>## Estimating the smoothing required to achieve the target ICC of 0.08</code></pre>
-<pre><code>## </code></pre>
+<pre><code>## 
+bandwidth: 0.156946255820714  ICC = 0.0824323247815882 loss = 5.91620384312814e-06 </code></pre>
 <div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" tabindex="-1"></a>results2c <span class="ot">&lt;-</span> <span class="fu">CRTanalysis</span>(example2c, <span class="at">method =</span> <span class="st">&#39;GEE&#39;</span>)</span></code></pre></div>
 <pre><code>## No non-linear parameter.  No fixed effects of distance -</code></pre>
 <div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" tabindex="-1"></a><span class="fu">summary</span>(results2c)</span></code></pre></div>
@@ -598,12 +600,12 @@ overall initial prevalence and ICC</h4>
 ## Analysis method:  GEE 
 ## Link function:  logit 
 ## Model formula:  arm 
-## No modelling of contamination 
-## Estimates:       Control:  0.444  (95% CL:  0.363 0.528 )
-##             Intervention:  0.156  (95% CL:  0.134 0.18 )
-##                 Efficacy:  0.649  (95% CL:  0.551 0.722 )
-## Coefficient of variation:  52.7 %  (95% CL:  42.2 70.8 )
-## Intracluster correlation (ICC)  :  0.0823  (95% CL:  0.0371 0.128 )
+## No modelling of spillover 
+## Estimates:       Control:  0.381  (95% CL:  0.309 0.458 )
+##             Intervention:  0.219  (95% CL:  0.183 0.26 )
+##                 Efficacy:  0.425  (95% CL:  0.25 0.557 )
+## Coefficient of variation:  51.1 %  (95% CL:  41.1 68.4 )
+## Intracluster correlation (ICC)  :  0.0824  (95% CL:  0.0417 0.123 )
 ## </code></pre>
 </div>
 

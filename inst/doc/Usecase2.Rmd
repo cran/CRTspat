@@ -1,15 +1,15 @@
 ---
-title: "Use Case 02: Simulation of trials with geographical contamination"
+title: "Use Case 02: Simulation of trials with geographical spillover"
 output:
   rmarkdown::html_vignette:
   toc: true
 vignette: >
-  %\VignetteIndexEntry{Use Case 02: Simulation of trials with geographical contamination}
+  %\VignetteIndexEntry{Use Case 02: Simulation of trials with geographical spillover}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
-Effects of settlement patterns, choices of cluster size and buffer widths, and the extent of contamination between arms on the outcomes of CRTs do not lend themselves to mathematical analysis. Simulations of trials are used to explore the effects of these variables on trial power and on the robustness of statistical methodologies.
+Effects of settlement patterns, choices of cluster size and buffer widths, and the extent of spillover between arms on the outcomes of CRTs do not lend themselves to mathematical analysis. Simulations of trials are used to explore the effects of these variables on trial power and on the robustness of statistical methodologies.
 
 Trials can be simulated using the `simulateCRT` function, which augments a `trial` data frame (created externally) or object of class `CRTsp` (created by package functions) with simulated outcome data.  The input object must be given location information and both cluster and arm assignments (see [Use Case 1](Usecase1.html)) (or the package can generate these if the objective is purely simulation.
 
@@ -21,9 +21,9 @@ Information about the underlying spatial pattern of disease is used in the form 
 |:-------------------|:--------------------------|
 |`propensity` supplied by user|Baseline data are created by sampling around `propensity`|
 |Baseline data are supplied by user and `propensity` is not supplied |`propensity` is created from the baseline data|
-|Neither baseline data nor `propensity` are supplied |`propensity` is generated as a normal kernel, with the bandwidth adjusted to achieve the input value of the `ICC_inp` (after the further smoothing stage to simulate contamination (see below))|
+|Neither baseline data nor `propensity` are supplied |`propensity` is generated using normal kernels, with the bandwidth adjusted to achieve the input value of the `ICC_inp` (after the further smoothing stage to simulate spillover (see below))|
 
-The effect of intervention is simulated as a fixed percentage reduction in the `propensity`. Contamination or spillover between trial arms is then modelled as a additional smoothing process applied to the intervention-adjusted `propensity` via a further bivariate normal kernel. In the case of mosquito borne disease this is proposed as an approximation to the effect of mosquito movement. The degree of spillover is specified either as a contamination range with the `theta_inp` parameter, or as `sd`, the bandwidth of the corresponding normal kernel. If both are provided then it is the value of `theta_inp` that is used.
+The effect of intervention is simulated as a fixed percentage reduction in the `propensity`. Contamination or spillover between trial arms is then modelled as a additional smoothing process applied to the intervention-adjusted `propensity` via a further bivariate normal kernel. In the case of mosquito borne disease this is proposed as an approximation to the effect of mosquito movement. The degree of spillover is specified either as a spillover interval with the `theta_inp` parameter, or as `sd`, the bandwidth of the corresponding normal kernel. If both are provided then it is the value of `theta_inp` that is used.
 
 #### Example with baseline data provided as proportions
 
@@ -99,7 +99,7 @@ summary(example2a)
 ## No power calculations to report          -            
 ## 
 ## Other variables in dataset
-## --------------------------          RDT_test_result  base_denom  denom  kernelID  propensity  num
+## --------------------------          RDT_test_result  base_denom  denom  propensity  num
 ```
 
 ```r
@@ -115,13 +115,13 @@ summary(example2aanalysis)
 ## Analysis method:  T 
 ## Link function:  logit 
 ## Model formula:  arm + (1 | cluster) 
-## No modelling of contamination 
-## Estimates:       Control:  0.454  (95% CL:  0.402 0.506 )
-##             Intervention:  0.128  (95% CL:  0.0833 0.191 )
-##                 Efficacy:  0.719  (95% CL:  0.712 0.892 )
-## Coefficient of variation:  28.6 %  (95% CL:  21.9 41.5 )
+## No modelling of spillover 
+## Estimates:       Control:  0.376  (95% CL:  0.286 0.475 )
+##             Intervention:  0.195  (95% CL:  0.133 0.278 )
+##                 Efficacy:  0.48  (95% CL:  0.28 0.774 )
+## Coefficient of variation:  39.7 %  (95% CL:  29.9 59.8 )
 ##  
-## P-value (2-sided):  2.450413e-07
+## P-value (2-sided):  0.0036424
 ```
 
 ```r
@@ -177,7 +177,7 @@ example2b<- CRTsp(new_site) %>%
 ```
 
 ```
-## 
+## bandwidth: 1  ICC = 0.0460233924407313 loss = 1.58134076804332e-05 
 ```
 
 ```r
@@ -227,12 +227,12 @@ summary(results2b)
 ## Analysis method:  GEE 
 ## Link function:  logit 
 ## Model formula:  arm 
-## No modelling of contamination 
-## Estimates:       Control:  0.451  (95% CL:  0.395 0.508 )
-##             Intervention:  0.149  (95% CL:  0.123 0.179 )
-##                 Efficacy:  0.67  (95% CL:  0.586 0.735 )
-## Coefficient of variation:  38.6 %  (95% CL:  31.5 50 )
-## Intracluster correlation (ICC)  :  0.0389  (95% CL:  0.018 0.0598 )
+## No modelling of spillover 
+## Estimates:       Control:  0.461  (95% CL:  0.402 0.521 )
+##             Intervention:  0.139  (95% CL:  0.113 0.17 )
+##                 Efficacy:  0.698  (95% CL:  0.615 0.764 )
+## Coefficient of variation:  40.5 %  (95% CL:  33 52.7 )
+## Intracluster correlation (ICC)  :  0.046  (95% CL:  0.019 0.073 )
 ## 
 ```
 
@@ -271,7 +271,7 @@ example2c<- CRTsp(geoscale = 2, locations=2000, kappa=3, mu=40) %>%
 ```
 
 ```
-## 
+## bandwidth: 0.156946255820714  ICC = 0.0824323247815882 loss = 5.91620384312814e-06 
 ```
 
 ```r
@@ -292,11 +292,11 @@ summary(results2c)
 ## Analysis method:  GEE 
 ## Link function:  logit 
 ## Model formula:  arm 
-## No modelling of contamination 
-## Estimates:       Control:  0.444  (95% CL:  0.363 0.528 )
-##             Intervention:  0.156  (95% CL:  0.134 0.18 )
-##                 Efficacy:  0.649  (95% CL:  0.551 0.722 )
-## Coefficient of variation:  52.7 %  (95% CL:  42.2 70.8 )
-## Intracluster correlation (ICC)  :  0.0823  (95% CL:  0.0371 0.128 )
+## No modelling of spillover 
+## Estimates:       Control:  0.381  (95% CL:  0.309 0.458 )
+##             Intervention:  0.219  (95% CL:  0.183 0.26 )
+##                 Efficacy:  0.425  (95% CL:  0.25 0.557 )
+## Coefficient of variation:  51.1 %  (95% CL:  41.1 68.4 )
+## Intracluster correlation (ICC)  :  0.0824  (95% CL:  0.0417 0.123 )
 ## 
 ```

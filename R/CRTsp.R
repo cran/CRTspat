@@ -264,7 +264,7 @@ summary.CRTsp <- function(object, maskbuffer = 0.2, ...) {
   if (is.null(object$design$effect)) {
     rownames(output)[17] <- "No power calculations to report"
   } else {
-    rownames(output)[17] <- "\nPower calculations (ignoring contamination)\n------------------                    "
+    rownames(output)[17] <- "\nPower calculations (ignoring spillover)\n------------------                    "
 
     sufficient <- ifelse(clustersAvailableFull >= object$geom_full$clustersRequired,
                          "Yes", "No")

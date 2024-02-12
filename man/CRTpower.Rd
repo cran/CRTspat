@@ -71,7 +71,7 @@ the intra-cluster correlation in the outcome (\code{ICC}) as an input. If the co
 the intra-cluster correlation is computed from the coefficient of variation using the formulae
 from \href{https://www.taylorfrancis.com/books/mono/10.1201/9781584888178/cluster-randomised-trials-richard-hayes-lawrence-moulton}{Hayes & Moulton}. If incompatible values for \code{ICC} and \code{cv_percent} are supplied
 then the value of the \code{ICC} is used.\cr\cr
-The calculations do not consider any loss in power due to contamination, loss to follow-up etc..\cr\cr
+The calculations do not consider any loss in power due to spillover, loss to follow-up etc..\cr\cr
 If geolocations are not input then power and sample size calculations are based on the scalar input parameters.\cr\cr
 If a trial dataframe or \code{'CRTsp'} object is input then this is used to determine the number of locations. If this input object
 contains cluster assignments then the numbers and sizes of clusters in the input data are used to estimate the power. If buffer zones have been specified
@@ -80,7 +80,7 @@ The output is an object of class \code{'CRTsp'} containing any input trial dataf
 \itemize{
 \item The required numbers of clusters to achieve the specified power.
 \item The design effect based on the input ICC.
-\item Calculations of the nominal power (ignoring any bias caused by contamination, loss to follow-up etc.)\cr
+\item Calculations of the nominal power (ignoring any bias caused by spillover, loss to follow-up etc.)\cr
 }
 }
 \examples{

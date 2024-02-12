@@ -22,7 +22,7 @@ CRTwrite(
 \tabular{ll}{
 \code{'cluster'}\tab cluster assignments \cr
 \code{'arms'}\tab arm assignments \cr
-\code{'buffer'}\tab buffer zone or contamination zone\cr
+\code{'buffer'}\tab buffer zone or spillover zone\cr
 \code{'mask'}\tab mask for areas that are distant from habitations \cr
 }}
 
