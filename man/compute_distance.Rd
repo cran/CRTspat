@@ -4,7 +4,12 @@
 \alias{compute_distance}
 \title{Compute distance or surround values for a cluster randomized trial}
 \usage{
-compute_distance(trial, distance = "nearestDiscord", scale_par = NULL)
+compute_distance(
+  trial,
+  distance = "nearestDiscord",
+  scale_par = NULL,
+  auxiliary = NULL
+)
 }
 \arguments{
 \item{trial}{an object of class \code{"CRTsp"} or a data frame containing locations in (x,y) coordinates, cluster
@@ -13,6 +18,7 @@ assignments (factor \code{cluster}), and arm assignments (factor \code{arm}).}
 \item{distance}{the quantity(s) to be computed. Options are:
 \tabular{ll}{
 \code{"nearestDiscord"} \tab distance to nearest discordant location (km)\cr
+\code{"distanceAssigned"} \tab distance to the nearest pixel in the assigned cluster (km)\cr
 \code{"disc"} \tab disc \cr
 \code{"kern"} \tab kernel-based measure \cr
 \code{"hdep"} \tab Tukey half space depth\cr
@@ -21,6 +27,8 @@ assignments (factor \code{cluster}), and arm assignments (factor \code{arm}).}
 
 \item{scale_par}{scale parameter equal to the disc radius in km if \code{distance = "disc"}
 or to the standard deviance of the kernels if \code{distance = "kern"}}
+
+\item{auxiliary}{\code{"CRTsp"} object containing external cluster and or arm assignments.}
 }
 \value{
 The input \code{"CRTsp"} object with additional column(s) added to the \code{trial} data frame
@@ -34,6 +42,8 @@ For each selected distance measure, the function first checks whether the variab
 the calculations only if the corresponding field is absent from the \code{trial} data frame.\cr\cr
 If \code{distance = "nearestDiscord"} is selected the computed values are Euclidean distances
 assigned a positive sign for the intervention arm of the trial, and a negative sign for the control arm.\cr\cr
+If \code{distance = "distanceAssigned"} is selected the computed values are Euclidean distances
+to the nearest pixel in the \code{auxiliary} \code{"CRTsp"} object.\cr\cr
 If \code{distance = "disc"} is specified, the disc statistic is computed for each location as the number of locations
 within the specified radius that are in the intervention arm
 (\href{https://onlinelibrary.wiley.com/doi/full/10.1111/biom.13316}{Anaya-Izquierdo & Alexander(2020)}). The input
@@ -52,7 +62,11 @@ If either \code{distance = "hdep"} or \code{distance = "sdep"} is specified then
 Tukey half space depth are calculated using the algorithm of
 \href{https://www.jstor.org/stable/2986073}{Rousseeuw & Ruts(1996)}. The half-depth probability within the intervention cloud (di) is computed
 with respect to other locations in the intervention arm (\href{https://onlinelibrary.wiley.com/doi/full/10.1111/biom.13316}{Anaya-Izquierdo & Alexander(2020)}). The half-depth within
-the half-depth within the control cloud (dc) is also computed. \code{CRTspat} returns the proportion di/(dc + di). \cr
+the half-depth within the control cloud (dc) is also computed. \code{CRTspat} returns the proportion di/(dc + di). \cr\cr
+If an auxiliary \code{auxiliary} \code{"CRTsp"} object is specified then either \code{distanceAssigned} or \code{nearestDiscord} (the default)
+is computed with respect to the assignments in the auxiliary. If the auxiliary is a grid with \code{design$geometry} set to \code{'triangle'},
+\code{'square'} or \code{'hexagon'} then the distance is computed to the edge of the nearest grid pixel in the discordant arm
+(using a circular approximation for the perimeter) rather than to the point location itself.\cr
 }
 \examples{
 {

@@ -49,7 +49,7 @@ overflow: visible;
 </style>
 <style type="text/css" data-origin="pandoc">
 pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span { line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -549,9 +549,10 @@ functional forms for this relationship is specified by the value of
 <tr class="even">
 <td><code>X</code></td>
 <td>Simple intervention effect</td>
-<td><span class="math inline">\(\begin{matrix}  P\left( d \right) = \ 0\
-for\ d\  &lt; \ 0 \\  P\left( d \right) = \ 1\ for\ d\  &gt; \ 0
-\\  \end{matrix}\ \)</span></td>
+<td><span class="math inline">\(\begin{matrix}
+     P\left( d \right) = \ 0\ for\ d\  &lt; \ 0 \\
+     P\left( d \right) = \ 1\ for\ d\  &gt; \ 0 \\
+     \end{matrix}\ \)</span></td>
 <td><code>T</code> <code>GEE</code> <code>LME4</code> <code>INLA</code>
 <code>MCMC</code></td>
 </tr>
@@ -572,12 +573,14 @@ erf\left(\frac{d}{S\sqrt2}\right)\)</span></td>
 <tr class="odd">
 <td><code>S</code></td>
 <td>piecewise linear</td>
-<td><span class="math inline">\(\begin{matrix}  P\left( d \right) = \
-0\  for\ d\  &lt; \  - S/2\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \  \ \ \ \ \ \ \
-\ \\  P\left( d \right) = \ \left(S/2\  + \ d \right)/S\ for\  - S/2
-&lt; d\  &lt; \ S/2\\  P\left( d \right) = \ 1\  for\ d\  &gt; \ S/2\ \
-\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \  \ \ \\  \end{matrix}\
-\)</span></td>
+<td><span class="math inline">\(\begin{matrix}
+    P\left( d \right) = \ 0\  for\ d\  &lt; \  - S/2\ \ \ \ \ \ \ \ \ \
+\ \ \ \ \ \  \ \ \ \ \ \ \ \ \\
+    P\left( d \right) = \ \left(S/2\  + \ d \right)/S\ for\  - S/2 &lt;
+d\  &lt; \ S/2\\
+    P\left( d \right) = \ 1\  for\ d\  &gt; \ S/2\ \ \ \ \ \ \ \ \ \ \ \
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \  \ \ \\
+    \end{matrix}\ \)</span></td>
 <td><code>LME4</code> <code>INLA</code> <code>MCMC</code></td>
 </tr>
 <tr class="even">
@@ -636,7 +639,7 @@ to the spillover interval in those cases where this is estimated.</p>
 ## Estimates:       Control:  0.418  (95% CL:  0.331 0.509 )
 ##             Intervention:  0.186  (95% CL:  0.136 0.25 )
 ##                 Efficacy:  0.553  (95% CL:  0.327 0.703 )
-## spillover interval(km):    4.22  (95% CL:  4.2 4.23 )
+## Spillover interval(km):      4.22  (95% CL:  4.2 4.23 )
 ## % locations contaminated: 91.6  (95% CL:  90.6 92 %)
 ## Total effect            : 0.23  (95% CL:  0.114 0.344 )
 ## Ipsilateral Spillover   : 0.0233  (95% CL:  0.0127 0.0323 )
@@ -657,7 +660,7 @@ to the spillover interval in those cases where this is estimated.</p>
 ## Estimates:       Control:  0.417  (95% CL:  0.332 0.51 )
 ##             Intervention:  0.186  (95% CL:  0.136 0.249 )
 ##                 Efficacy:  0.552  (95% CL:  0.329 0.7 )
-## spillover interval(km):    4.26  (95% CL:  4.24 4.28 )
+## Spillover interval(km):      4.26  (95% CL:  4.24 4.28 )
 ## % locations contaminated: 92.7  (95% CL:  92.2 93.1 %)
 ## Total effect            : 0.229  (95% CL:  0.115 0.342 )
 ## Ipsilateral Spillover   : 0.0219  (95% CL:  0.0121 0.0304 )
@@ -678,7 +681,7 @@ to the spillover interval in those cases where this is estimated.</p>
 ## Estimates:       Control:  0.423  (95% CL:  0.334 0.516 )
 ##             Intervention:  0.185  (95% CL:  0.135 0.247 )
 ##                 Efficacy:  0.561  (95% CL:  0.341 0.711 )
-## spillover interval(km):    4.1  (95% CL:  4.1 4.11 )
+## Spillover interval(km):      4.1  (95% CL:  4.1 4.11 )
 ## % locations contaminated: 86.6  (95% CL:  86.6 87.1 %)
 ## Total effect            : 0.237  (95% CL:  0.12 0.356 )
 ## Ipsilateral Spillover   : 0.029  (95% CL:  0.016 0.0403 )
@@ -699,7 +702,7 @@ to the spillover interval in those cases where this is estimated.</p>
 ## Estimates:       Control:  0.584  (95% CL:  0.381 0.758 )
 ##             Intervention:  0.116  (95% CL:  0.0587 0.216 )
 ##                 Efficacy:  0.801  (95% CL:  0.465 0.92 )
-## spillover interval(km):    6.64  (95% CL:  6.61 6.65 )
+## Spillover interval(km):      6.64  (95% CL:  6.61 6.65 )
 ## % locations contaminated: 99.8  (95% CL:  99.8 99.8 %)
 ## Total effect            : 0.468  (95% CL:  0.181 0.694 )
 ## Ipsilateral Spillover   : 0.117  (95% CL:  0.0564 0.157 )
@@ -837,7 +840,7 @@ parameter in other models (see above Table 5.2).</p>
 ## Estimates:       Control:  0.381  (95% CL:  0.292 0.478 )
 ##             Intervention:  0.209  (95% CL:  0.15 0.282 )
 ##                 Efficacy:  0.452  (95% CL:  0.167 0.639 )
-## spillover interval(km):    0.978  (95% CL:  0.976 0.98 )
+## Spillover interval(km):      0.978  (95% CL:  0.976 0.98 )
 ## % locations contaminated: 55  (95% CL:  55 55 %)
 ## Total effect            : 0.172  (95% CL:  0.0524 0.292 )
 ## Ipsilateral Spillover   : 0.0313  (95% CL:  0.01 0.0512 )
@@ -859,7 +862,7 @@ parameter in other models (see above Table 5.2).</p>
 ## Estimates:       Control:  0.393  (95% CL:  0.307 0.485 )
 ##             Intervention:  0.199  (95% CL:  0.145 0.268 )
 ##                 Efficacy:  0.493  (95% CL:  0.243 0.66 )
-## spillover interval(km):    0.978  (95% CL:  0.976 0.98 )
+## Spillover interval(km):      0.978  (95% CL:  0.976 0.98 )
 ## % locations contaminated: 52.4  (95% CL:  52.2 52.4 %)
 ## Total effect            : 0.193  (95% CL:  0.0802 0.306 )
 ## Ipsilateral Spillover   : 0.0299  (95% CL:  0.013 0.0456 )
@@ -881,7 +884,7 @@ parameter in other models (see above Table 5.2).</p>
 ## Estimates:       Control:  0.387  (95% CL:  0.312 0.467 )
 ##             Intervention:  0.2  (95% CL:  0.149 0.26 )
 ##                 Efficacy:  0.482  (95% CL:  0.273 0.634 )
-## spillover interval(km):    0.978  (95% CL:  0.976 0.98 )
+## Spillover interval(km):      0.978  (95% CL:  0.976 0.98 )
 ## % locations contaminated: 8.89  (95% CL:  8.89 8.89 %)
 ## Total effect            : 0.186  (95% CL:  0.0912 0.282 )
 ## Ipsilateral Spillover   : 0.00458  (95% CL:  0.00239 0.00656 )
@@ -903,7 +906,7 @@ parameter in other models (see above Table 5.2).</p>
 ## Estimates:       Control:  0.406  (95% CL:  0.327 0.491 )
 ##             Intervention:  0.185  (95% CL:  0.136 0.245 )
 ##                 Efficacy:  0.542  (95% CL:  0.349 0.684 )
-## spillover interval(km):    0.979  (95% CL:  0.977 0.98 )
+## Spillover interval(km):      0.979  (95% CL:  0.977 0.98 )
 ## % locations contaminated: 50.8  (95% CL:  50.6 50.9 %)
 ## Total effect            : 0.22  (95% CL:  0.122 0.32 )
 ## Ipsilateral Spillover   : 0.011  (95% CL:  0.00661 0.0152 )

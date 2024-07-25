@@ -40,7 +40,7 @@ output from the statistical procedure that is called, try `<analysis>$model_obje
 `summary("<analysis>$model_object")`.
 
 
-```r
+``` r
 library(CRTspat)
 example <- readdata("exampleCRT.txt")
 analysisT <- CRTanalysis(example, method = "T")
@@ -62,7 +62,7 @@ summary(analysisT)
 ## P-value (2-sided):  0.006879064
 ```
 
-```r
+``` r
 analysisT$model_object
 ```
 
@@ -122,7 +122,7 @@ The different values for `cfunc` lead to the fitted curves shown in Figure 5.1. 
 plot corresponds to the spillover interval in those cases where this is estimated.
 
 
-```r
+``` r
 analysisLME4_Z <- CRTanalysis(example, method = "LME4", cfunc = "Z")
 summary(analysisLME4_Z)
 ```
@@ -140,7 +140,7 @@ summary(analysisLME4_Z)
 ## AIC     :  1391.609
 ```
 
-```r
+``` r
 analysisLME4_X <- CRTanalysis(example, method = "LME4", cfunc = "X")
 summary(analysisLME4_X)
 ```
@@ -160,7 +160,7 @@ summary(analysisLME4_X)
 ## AIC     :  1385.898
 ```
 
-```r
+``` r
 analysisLME4_P <- CRTanalysis(example, method = "LME4", cfunc = "P")
 summary(analysisLME4_P)
 ```
@@ -177,7 +177,7 @@ summary(analysisLME4_P)
 ## Estimates:       Control:  0.418  (95% CL:  0.331 0.509 )
 ##             Intervention:  0.186  (95% CL:  0.136 0.25 )
 ##                 Efficacy:  0.553  (95% CL:  0.327 0.703 )
-## spillover interval(km):    4.22  (95% CL:  4.2 4.23 )
+## Spillover interval(km):      4.22  (95% CL:  4.2 4.23 )
 ## % locations contaminated: 91.6  (95% CL:  90.6 92 %)
 ## Total effect            : 0.23  (95% CL:  0.114 0.344 )
 ## Ipsilateral Spillover   : 0.0233  (95% CL:  0.0127 0.0323 )
@@ -187,7 +187,7 @@ summary(analysisLME4_P)
 ## AIC     :  1382.215 including penalty for the spillover scale parameter
 ```
 
-```r
+``` r
 analysisLME4_L <- CRTanalysis(example, method = "LME4", cfunc = "L")
 summary(analysisLME4_L)
 ```
@@ -204,7 +204,7 @@ summary(analysisLME4_L)
 ## Estimates:       Control:  0.417  (95% CL:  0.332 0.51 )
 ##             Intervention:  0.186  (95% CL:  0.136 0.249 )
 ##                 Efficacy:  0.552  (95% CL:  0.329 0.7 )
-## spillover interval(km):    4.26  (95% CL:  4.24 4.28 )
+## Spillover interval(km):      4.26  (95% CL:  4.24 4.28 )
 ## % locations contaminated: 92.7  (95% CL:  92.2 93.1 %)
 ## Total effect            : 0.229  (95% CL:  0.115 0.342 )
 ## Ipsilateral Spillover   : 0.0219  (95% CL:  0.0121 0.0304 )
@@ -214,7 +214,7 @@ summary(analysisLME4_L)
 ## AIC     :  1382.201 including penalty for the spillover scale parameter
 ```
 
-```r
+``` r
 analysisLME4_S <- CRTanalysis(example, method = "LME4", cfunc = "S")
 summary(analysisLME4_S)
 ```
@@ -231,7 +231,7 @@ summary(analysisLME4_S)
 ## Estimates:       Control:  0.423  (95% CL:  0.334 0.516 )
 ##             Intervention:  0.185  (95% CL:  0.135 0.247 )
 ##                 Efficacy:  0.561  (95% CL:  0.341 0.711 )
-## spillover interval(km):    4.1  (95% CL:  4.1 4.11 )
+## Spillover interval(km):      4.1  (95% CL:  4.1 4.11 )
 ## % locations contaminated: 86.6  (95% CL:  86.6 87.1 %)
 ## Total effect            : 0.237  (95% CL:  0.12 0.356 )
 ## Ipsilateral Spillover   : 0.029  (95% CL:  0.016 0.0403 )
@@ -241,7 +241,7 @@ summary(analysisLME4_S)
 ## AIC     :  1382.094 including penalty for the spillover scale parameter
 ```
 
-```r
+``` r
 analysisLME4_R <- CRTanalysis(example, method = "LME4", cfunc = "R")
 summary(analysisLME4_R)
 ```
@@ -258,7 +258,7 @@ summary(analysisLME4_R)
 ## Estimates:       Control:  0.584  (95% CL:  0.381 0.758 )
 ##             Intervention:  0.116  (95% CL:  0.0587 0.216 )
 ##                 Efficacy:  0.801  (95% CL:  0.465 0.92 )
-## spillover interval(km):    6.64  (95% CL:  6.61 6.65 )
+## Spillover interval(km):      6.64  (95% CL:  6.61 6.65 )
 ## % locations contaminated: 99.8  (95% CL:  99.8 99.8 %)
 ## Total effect            : 0.468  (95% CL:  0.181 0.694 )
 ## Ipsilateral Spillover   : 0.117  (95% CL:  0.0564 0.157 )
@@ -268,7 +268,7 @@ summary(analysisLME4_R)
 ## AIC     :  1384.711
 ```
 
-```r
+``` r
 p0 <- plotCRT(analysisLME4_Z, map = FALSE)
 p1 <- plotCRT(analysisLME4_X, map = FALSE)
 p2 <- plotCRT(analysisLME4_P, map = FALSE)
@@ -311,7 +311,7 @@ add them to a `trial` data frame and specify them using `distance`. `CRTanalysis
 
 
 
-```r
+``` r
 examples <- compute_distance(example, distance = "hdep")
 ps1 <- plotCRT(examples, distance = "hdep", legend.position = c(0.6, 0.8))
 ps2 <- plotCRT(examples, distance = "sdep")
@@ -331,7 +331,7 @@ If `distance` is assigned a value of either `hdep`, `sdep`, then `cfunc = "R"` i
 scale parameter estimated in the same way as in the scale parameter in other models (see above Table 5.2).
 
 
-```r
+``` r
 examples_hdep <- CRTanalysis(examples, method = "LME4", distance = "hdep", cfunc = 'R')
 summary(examples_hdep)
 ```
@@ -348,7 +348,7 @@ summary(examples_hdep)
 ## Estimates:       Control:  0.381  (95% CL:  0.292 0.478 )
 ##             Intervention:  0.209  (95% CL:  0.15 0.282 )
 ##                 Efficacy:  0.452  (95% CL:  0.167 0.639 )
-## spillover interval(km):    0.978  (95% CL:  0.976 0.98 )
+## Spillover interval(km):      0.978  (95% CL:  0.976 0.98 )
 ## % locations contaminated: 55  (95% CL:  55 55 %)
 ## Total effect            : 0.172  (95% CL:  0.0524 0.292 )
 ## Ipsilateral Spillover   : 0.0313  (95% CL:  0.01 0.0512 )
@@ -358,7 +358,7 @@ summary(examples_hdep)
 ## AIC     :  1385.89
 ```
 
-```r
+``` r
 ps4 <- plotCRT(examples_hdep,legend.position = c(0.8, 0.8))
 examples_sdep <- CRTanalysis(examples, method = "LME4", distance = "sdep", cfunc = 'R')
 summary(examples_sdep)
@@ -376,7 +376,7 @@ summary(examples_sdep)
 ## Estimates:       Control:  0.393  (95% CL:  0.307 0.485 )
 ##             Intervention:  0.199  (95% CL:  0.145 0.268 )
 ##                 Efficacy:  0.493  (95% CL:  0.243 0.66 )
-## spillover interval(km):    0.978  (95% CL:  0.976 0.98 )
+## Spillover interval(km):      0.978  (95% CL:  0.976 0.98 )
 ## % locations contaminated: 52.4  (95% CL:  52.2 52.4 %)
 ## Total effect            : 0.193  (95% CL:  0.0802 0.306 )
 ## Ipsilateral Spillover   : 0.0299  (95% CL:  0.013 0.0456 )
@@ -386,7 +386,7 @@ summary(examples_sdep)
 ## AIC     :  1382.417
 ```
 
-```r
+``` r
 ps5 <- plotCRT(examples_sdep)
 examples_disc <- CRTanalysis(examples, method = "LME4", distance = "disc", cfunc = 'R', scale_par = 0.15)
 summary(examples_disc)
@@ -404,7 +404,7 @@ summary(examples_disc)
 ## Estimates:       Control:  0.387  (95% CL:  0.312 0.467 )
 ##             Intervention:  0.2  (95% CL:  0.149 0.26 )
 ##                 Efficacy:  0.482  (95% CL:  0.273 0.634 )
-## spillover interval(km):    0.978  (95% CL:  0.976 0.98 )
+## Spillover interval(km):      0.978  (95% CL:  0.976 0.98 )
 ## % locations contaminated: 8.89  (95% CL:  8.89 8.89 %)
 ## Total effect            : 0.186  (95% CL:  0.0912 0.282 )
 ## Ipsilateral Spillover   : 0.00458  (95% CL:  0.00239 0.00656 )
@@ -414,7 +414,7 @@ summary(examples_disc)
 ## AIC     :  1380.274
 ```
 
-```r
+``` r
 ps6 <- plotCRT(examples_disc)
 examples_kern <- CRTanalysis(examples, method = "LME4", distance = "kern", cfunc = 'R', scale_par = 0.15)
 summary(examples_kern)
@@ -432,7 +432,7 @@ summary(examples_kern)
 ## Estimates:       Control:  0.406  (95% CL:  0.327 0.491 )
 ##             Intervention:  0.185  (95% CL:  0.136 0.245 )
 ##                 Efficacy:  0.542  (95% CL:  0.349 0.684 )
-## spillover interval(km):    0.979  (95% CL:  0.977 0.98 )
+## Spillover interval(km):      0.979  (95% CL:  0.977 0.98 )
 ## % locations contaminated: 50.8  (95% CL:  50.6 50.9 %)
 ## Total effect            : 0.22  (95% CL:  0.122 0.32 )
 ## Ipsilateral Spillover   : 0.011  (95% CL:  0.00661 0.0152 )
@@ -442,7 +442,7 @@ summary(examples_kern)
 ## AIC     :  1375.677
 ```
 
-```r
+``` r
 ps7 <- plotCRT(examples_kern)
 plot_grid(ps4, ps5, ps6, ps7, labels = c('hdep', 'sdep', 'disc', 'kern'), label_size = 10, ncol = 2)
 ```

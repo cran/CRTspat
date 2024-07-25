@@ -49,7 +49,7 @@ overflow: visible;
 </style>
 <style type="text/css" data-origin="pandoc">
 pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span { line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -374,21 +374,21 @@ distribution.</p>
 <span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">7</span>)</span>
 <span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a>effect <span class="ot">&lt;-</span> <span class="fu">runif</span>(nsimulations,<span class="dv">0</span>,<span class="fl">0.6</span>)</span>
 <span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a><span class="co"># Data frame of input spillover interval</span></span>
-<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a>theta_inp <span class="ot">&lt;-</span> <span class="fu">runif</span>(nsimulations, <span class="at">min =</span> <span class="dv">0</span>, <span class="at">max =</span> <span class="fl">1.5</span>)</span>
-<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a>input <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">effect =</span> effect, <span class="at">theta_inp =</span> theta_inp)</span></code></pre></div>
+<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a>spillover_interval <span class="ot">&lt;-</span> <span class="fu">runif</span>(nsimulations, <span class="at">min =</span> <span class="dv">0</span>, <span class="at">max =</span> <span class="fl">1.5</span>)</span>
+<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a>input <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">effect =</span> effect, <span class="at">spillover_interval =</span> spillover_interval)</span></code></pre></div>
 <p>A user function is defined for randomizing and analysing each
 simulated trial</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>CRTscenario7 <span class="ot">&lt;-</span> <span class="cf">function</span>(input) {</span>
 <span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>      ex <span class="ot">&lt;-</span> <span class="fu">specify_clusters</span>(CRT, <span class="at">c =</span> c, <span class="at">algo =</span> <span class="st">&quot;kmeans&quot;</span>) <span class="sc">%&gt;%</span></span>
 <span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>        <span class="fu">randomizeCRT</span>() <span class="sc">%&gt;%</span></span>
 <span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>        <span class="fu">simulateCRT</span>(<span class="at">effect =</span> input[[<span class="st">&quot;effect&quot;</span>]], <span class="at">generateBaseline =</span> <span class="cn">FALSE</span>, <span class="at">outcome0 =</span> outcome0,</span>
-<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>                    <span class="at">ICC_inp =</span> ICC, <span class="at">theta_inp =</span> input[[<span class="st">&quot;theta_inp&quot;</span>]],</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>                    <span class="at">ICC_inp =</span> ICC, <span class="at">spillover_interval =</span> input[[<span class="st">&quot;spillover_interval&quot;</span>]],</span>
 <span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>                    <span class="at">matchedPair =</span> <span class="cn">FALSE</span>, <span class="at">scale =</span> <span class="st">&quot;proportion&quot;</span>, <span class="at">denominator =</span> <span class="st">&quot;denom&quot;</span>, <span class="at">tol =</span> <span class="fl">0.01</span>)</span>
-<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>    sd <span class="ot">&lt;-</span> theta_inp<span class="sc">/</span>(<span class="dv">2</span> <span class="sc">*</span> <span class="fu">qnorm</span>(<span class="fl">0.975</span>))</span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>    sd <span class="ot">&lt;-</span> spillover_interval<span class="sc">/</span>(<span class="dv">2</span> <span class="sc">*</span> <span class="fu">qnorm</span>(<span class="fl">0.975</span>))</span>
 <span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>    contaminate_pop_pr_input <span class="ot">&lt;-</span> <span class="fu">sum</span>(<span class="fu">abs</span>(ex<span class="sc">$</span>trial<span class="sc">$</span>nearestDiscord) <span class="sc">&lt;</span></span>
-<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>              <span class="fl">0.5</span> <span class="sc">*</span> input[[<span class="st">&quot;theta_inp&quot;</span>]])<span class="sc">/</span><span class="fu">nrow</span>(ex<span class="sc">$</span>trial)</span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>              <span class="fl">0.5</span> <span class="sc">*</span> input[[<span class="st">&quot;spillover_interval&quot;</span>]])<span class="sc">/</span><span class="fu">nrow</span>(ex<span class="sc">$</span>trial)</span>
 <span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>    contaminate_pop_pr_sd <span class="ot">&lt;-</span> <span class="fu">sum</span>(<span class="fu">abs</span>(ex<span class="sc">$</span>trial<span class="sc">$</span>nearestDiscord) <span class="sc">&lt;</span></span>
-<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>              input[[<span class="st">&quot;theta_inp&quot;</span>]]<span class="sc">/</span>(<span class="dv">2</span> <span class="sc">*</span> <span class="fu">qnorm</span>(<span class="fl">0.975</span>)))<span class="sc">/</span><span class="fu">nrow</span>(ex<span class="sc">$</span>trial)</span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>              input[[<span class="st">&quot;spillover_interval&quot;</span>]]<span class="sc">/</span>(<span class="dv">2</span> <span class="sc">*</span> <span class="fu">qnorm</span>(<span class="fl">0.975</span>)))<span class="sc">/</span><span class="fu">nrow</span>(ex<span class="sc">$</span>trial)</span>
 <span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a>    examplePower <span class="ot">=</span> <span class="fu">CRTpower</span>(<span class="at">trial =</span> ex, <span class="at">desiredPower =</span> <span class="fl">0.8</span>,</span>
 <span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a>                           <span class="at">effect=</span>input[[<span class="st">&quot;effect&quot;</span>]], <span class="at">yC=</span>outcome0, <span class="at">outcome_type =</span> <span class="st">&#39;d&#39;</span>, <span class="at">ICC =</span> ICC, <span class="at">c =</span> c)</span>
 <span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a>    nominalpower <span class="ot">&lt;-</span>  examplePower<span class="sc">$</span>geom_full<span class="sc">$</span>power</span>
@@ -397,7 +397,7 @@ simulated trial</p>
 <span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a>      <span class="at">effect =</span> input[[<span class="st">&quot;effect&quot;</span>]],</span>
 <span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a>      <span class="at">contaminate_pop_pr_input =</span> contaminate_pop_pr_input,</span>
 <span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a>      <span class="at">contaminate_pop_pr_sd =</span> contaminate_pop_pr_sd,</span>
-<span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a>      <span class="at">theta_inp =</span> input[[<span class="st">&quot;theta_inp&quot;</span>]],</span>
+<span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a>      <span class="at">spillover_interval =</span> input[[<span class="st">&quot;spillover_interval&quot;</span>]],</span>
 <span id="cb2-21"><a href="#cb2-21" tabindex="-1"></a>      <span class="at">nominalpower =</span> examplePower<span class="sc">$</span>geom_full<span class="sc">$</span>power,</span>
 <span id="cb2-22"><a href="#cb2-22" tabindex="-1"></a>      <span class="at">Pvalue_t =</span> Tanalysis<span class="sc">$</span>pt_ests<span class="sc">$</span>p.value,</span>
 <span id="cb2-23"><a href="#cb2-23" tabindex="-1"></a>      <span class="at">effect_size_t =</span> Tanalysis<span class="sc">$</span>pt_ests<span class="sc">$</span>effect_size)</span>
@@ -448,19 +448,19 @@ error rate; <span class="math inline">\(\color{blue}{\textbf{----}}\)</span> : b
 <p>An analogous analysis, to that of performance relative to efficacy,
 can be carried out to explore the effect of the simulated spillover
 interval.</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="at">data =</span> results, <span class="fu">aes</span>(<span class="at">x =</span> theta_inp)) <span class="sc">+</span></span>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="at">data =</span> results, <span class="fu">aes</span>(<span class="at">x =</span> spillover_interval)) <span class="sc">+</span></span>
 <span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="fu">aes</span>(<span class="at">y =</span> contaminate_pop_pr_input), <span class="at">color =</span> <span class="st">&quot;#b2df8a&quot;</span>,<span class="at">se =</span> <span class="cn">FALSE</span>, <span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
 <span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="fu">aes</span>(<span class="at">y =</span> contaminate_pop_pr_sd), <span class="at">color =</span> <span class="st">&quot;#0072A7&quot;</span>,<span class="at">se =</span> <span class="cn">FALSE</span>, <span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
 <span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">&#39;Simulated spillover interval (km)&#39;</span>) <span class="sc">+</span></span>
 <span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">&#39;Proportion of the locations&#39;</span>)</span>
 <span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a></span>
-<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>results<span class="sc">$</span>theta_cat <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">round</span>(results<span class="sc">$</span>theta_inp<span class="sc">*</span><span class="dv">10</span>))</span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>results<span class="sc">$</span>theta_cat <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">round</span>(results<span class="sc">$</span>spillover_interval<span class="sc">*</span><span class="dv">10</span>))</span>
 <span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>by_theta <span class="ot">&lt;-</span> results[results<span class="sc">$</span>effect <span class="sc">&gt;</span> <span class="dv">0</span>, ] <span class="sc">%&gt;%</span></span>
 <span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>  <span class="fu">group_by</span>(theta_cat) <span class="sc">%&gt;%</span></span>
-<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a>  <span class="fu">summarise_at</span>(<span class="fu">c</span>(<span class="st">&quot;theta_inp&quot;</span>,<span class="st">&quot;significant_t&quot;</span>, <span class="st">&quot;nominalpower&quot;</span>, <span class="st">&quot;bias_t&quot;</span>, <span class="st">&quot;typeIIerror&quot;</span>),</span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a>  <span class="fu">summarise_at</span>(<span class="fu">c</span>(<span class="st">&quot;spillover_interval&quot;</span>,<span class="st">&quot;significant_t&quot;</span>, <span class="st">&quot;nominalpower&quot;</span>, <span class="st">&quot;bias_t&quot;</span>, <span class="st">&quot;typeIIerror&quot;</span>),</span>
 <span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>               mean, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a>by_theta<span class="sc">$</span>power_ratio <span class="ot">&lt;-</span> <span class="fu">with</span>(by_theta, significant_t<span class="sc">/</span>nominalpower)</span>
-<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="at">data =</span> by_theta, <span class="fu">aes</span>(<span class="at">x =</span> theta_inp)) <span class="sc">+</span></span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="at">data =</span> by_theta, <span class="fu">aes</span>(<span class="at">x =</span> spillover_interval)) <span class="sc">+</span></span>
 <span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="fu">aes</span>(<span class="at">y =</span> power_ratio), <span class="at">color =</span> <span class="st">&quot;#b2df8a&quot;</span>,<span class="at">se =</span> <span class="cn">FALSE</span>) <span class="sc">+</span></span>
 <span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="fu">aes</span>(<span class="at">y =</span> typeIIerror), <span class="at">color =</span> <span class="st">&quot;#D55E00&quot;</span>,<span class="at">se =</span> <span class="cn">FALSE</span>) <span class="sc">+</span></span>
 <span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="fu">aes</span>(<span class="at">y =</span> bias_t), <span class="at">color =</span> <span class="st">&quot;#0072A7&quot;</span>,<span class="at">se =</span> <span class="cn">FALSE</span>) <span class="sc">+</span></span>

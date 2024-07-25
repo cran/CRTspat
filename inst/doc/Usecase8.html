@@ -49,7 +49,7 @@ overflow: visible;
 </style>
 <style type="text/css" data-origin="pandoc">
 pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span { line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -393,7 +393,7 @@ spillover interval is sampled from a uniform(0, 1.5km) distribution.</p>
 <span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a>k <span class="ot">&lt;-</span> <span class="dv">25</span></span>
 <span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a><span class="co"># the number of trial simulations required (a small number, is used for testing, the plots are based on 1000)</span></span>
 <span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a>nsimulations <span class="ot">&lt;-</span> <span class="dv">2</span></span>
-<span id="cb1-17"><a href="#cb1-17" tabindex="-1"></a>theta_vec <span class="ot">&lt;-</span> <span class="fu">runif</span>(nsimulations,<span class="dv">0</span>,<span class="fl">1.5</span>)</span>
+<span id="cb1-17"><a href="#cb1-17" tabindex="-1"></a>spillover_vec <span class="ot">&lt;-</span> <span class="fu">runif</span>(nsimulations,<span class="dv">0</span>,<span class="fl">1.5</span>)</span>
 <span id="cb1-18"><a href="#cb1-18" tabindex="-1"></a>radii <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">0.1</span>, <span class="fl">0.2</span>, <span class="fl">0.3</span>, <span class="fl">0.4</span>, <span class="fl">0.5</span>)</span>
 <span id="cb1-19"><a href="#cb1-19" tabindex="-1"></a>proportions <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">0.1</span>, <span class="fl">0.2</span>, <span class="fl">0.3</span>, <span class="fl">0.4</span>, <span class="fl">0.5</span>)</span>
 <span id="cb1-20"><a href="#cb1-20" tabindex="-1"></a>scenarios <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">radius =</span> <span class="fu">c</span>(radii, <span class="fu">rep</span>(<span class="dv">0</span>,<span class="dv">6</span>)),</span>
@@ -434,16 +434,16 @@ removed</li>
 <span id="cb2-27"><a href="#cb2-27" tabindex="-1"></a>}</span>
 <span id="cb2-28"><a href="#cb2-28" tabindex="-1"></a></span>
 <span id="cb2-29"><a href="#cb2-29" tabindex="-1"></a><span class="co"># randomization and trial simulation</span></span>
-<span id="cb2-30"><a href="#cb2-30" tabindex="-1"></a>randomize_simulate <span class="ot">&lt;-</span> <span class="cf">function</span>(theta) {</span>
+<span id="cb2-30"><a href="#cb2-30" tabindex="-1"></a>randomize_simulate <span class="ot">&lt;-</span> <span class="cf">function</span>(spillover) {</span>
 <span id="cb2-31"><a href="#cb2-31" tabindex="-1"></a>  ex <span class="ot">&lt;-</span> <span class="fu">specify_clusters</span>(CRT, <span class="at">c =</span> c, <span class="at">algo =</span> <span class="st">&quot;kmeans&quot;</span>) <span class="sc">%&gt;%</span></span>
 <span id="cb2-32"><a href="#cb2-32" tabindex="-1"></a>    <span class="fu">randomizeCRT</span>() <span class="sc">%&gt;%</span></span>
 <span id="cb2-33"><a href="#cb2-33" tabindex="-1"></a>    <span class="fu">simulateCRT</span>(<span class="at">effect =</span> <span class="fl">0.4</span>, <span class="at">generateBaseline =</span> <span class="cn">FALSE</span>, <span class="at">outcome0 =</span> outcome0,</span>
-<span id="cb2-34"><a href="#cb2-34" tabindex="-1"></a>                <span class="at">ICC_inp =</span> ICC, <span class="at">theta_inp =</span> theta,</span>
+<span id="cb2-34"><a href="#cb2-34" tabindex="-1"></a>                <span class="at">ICC_inp =</span> ICC, <span class="at">spillover_interval =</span> spillover,</span>
 <span id="cb2-35"><a href="#cb2-35" tabindex="-1"></a>                <span class="at">matchedPair =</span> <span class="cn">FALSE</span>, <span class="at">scale =</span> <span class="st">&quot;proportion&quot;</span>, <span class="at">denominator =</span> <span class="st">&quot;denom&quot;</span>, <span class="at">tol =</span> <span class="fl">0.01</span>)</span>
 <span id="cb2-36"><a href="#cb2-36" tabindex="-1"></a>  <span class="co"># The results are collected in a data frame</span></span>
 <span id="cb2-37"><a href="#cb2-37" tabindex="-1"></a>  sub_results_matrix <span class="ot">&lt;-</span> <span class="fu">apply</span>(scenarios, <span class="at">MARGIN =</span> <span class="dv">1</span>,  <span class="at">FUN =</span> analyseReducedCRT, <span class="at">CRT =</span> ex)</span>
 <span id="cb2-38"><a href="#cb2-38" tabindex="-1"></a>  sub_results <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(<span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(sub_results_matrix, as.data.frame)))</span>
-<span id="cb2-39"><a href="#cb2-39" tabindex="-1"></a>  sub_results<span class="sc">$</span>theta_inp <span class="ot">&lt;-</span> theta</span>
+<span id="cb2-39"><a href="#cb2-39" tabindex="-1"></a>  sub_results<span class="sc">$</span>spillover_interval <span class="ot">&lt;-</span> spillover</span>
 <span id="cb2-40"><a href="#cb2-40" tabindex="-1"></a><span class="fu">return</span>(sub_results)</span>
 <span id="cb2-41"><a href="#cb2-41" tabindex="-1"></a>}</span></code></pre></div>
 <p>Collect all the analysis results and plot. Note that some analyses
@@ -458,9 +458,9 @@ is very small)</p>
 <span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>               <span class="at">effect_size =</span> <span class="fu">numeric</span>(<span class="dv">0</span>),</span>
 <span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>               <span class="at">gamma =</span> <span class="fu">numeric</span>(<span class="dv">0</span>))</span>
 <span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>simulation <span class="ot">&lt;-</span> <span class="dv">0</span></span>
-<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a><span class="cf">for</span>(theta <span class="cf">in</span> theta_vec){</span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a><span class="cf">for</span>(spillover <span class="cf">in</span> spillover_vec){</span>
 <span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a>  simulation <span class="ot">&lt;-</span> simulation <span class="sc">+</span> <span class="dv">1</span></span>
-<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a>  sub_results <span class="ot">&lt;-</span> <span class="fu">randomize_simulate</span>(theta)</span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a>  sub_results <span class="ot">&lt;-</span> <span class="fu">randomize_simulate</span>(spillover)</span>
 <span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a>  sub_results<span class="sc">$</span>simulation <span class="ot">&lt;-</span> simulation</span>
 <span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a>  results <span class="ot">&lt;-</span> <span class="fu">rbind</span>(results,sub_results)</span>
 <span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a>}</span></code></pre></div>
@@ -476,7 +476,7 @@ is very small)</p>
 <span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>  <span class="fu">scale_colour_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">&quot;#b2df8a&quot;</span>,<span class="st">&quot;#D55E00&quot;</span>,<span class="st">&quot;#0072A7&quot;</span>)) <span class="sc">+</span></span>
 <span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a>    <span class="fu">xlab</span>(<span class="st">&#39;Number of locations in analysis&#39;</span>) <span class="sc">+</span></span>
 <span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>    <span class="fu">ylab</span>(<span class="st">&#39;Power&#39;</span>)</span>
-<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a>fig8_1b <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(<span class="at">data =</span> results, <span class="fu">aes</span>(<span class="at">x =</span> theta_inp, <span class="at">y =</span> significant, <span class="at">color =</span> <span class="fu">factor</span>(fried))) <span class="sc">+</span></span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a>fig8_1b <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(<span class="at">data =</span> results, <span class="fu">aes</span>(<span class="at">x =</span> spillover_interval, <span class="at">y =</span> significant, <span class="at">color =</span> <span class="fu">factor</span>(fried))) <span class="sc">+</span></span>
 <span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">size =</span> <span class="dv">2</span>, <span class="at">se =</span> <span class="cn">FALSE</span>, <span class="at">show.legend =</span> <span class="cn">FALSE</span>, <span class="at">method =</span> <span class="st">&quot;loess&quot;</span>, <span class="at">span =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
 <span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a>  <span class="fu">scale_colour_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">&quot;#b2df8a&quot;</span>,<span class="st">&quot;#D55E00&quot;</span>,<span class="st">&quot;#0072A7&quot;</span>)) <span class="sc">+</span></span>
 <span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a>    <span class="fu">xlab</span>(<span class="st">&#39;Simulated spillover interval (km)&#39;</span>) <span class="sc">+</span></span>
@@ -486,7 +486,7 @@ is very small)</p>
 <span id="cb5-19"><a href="#cb5-19" tabindex="-1"></a>  <span class="fu">scale_colour_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">&quot;#b2df8a&quot;</span>,<span class="st">&quot;#D55E00&quot;</span>,<span class="st">&quot;#0072A7&quot;</span>)) <span class="sc">+</span></span>
 <span id="cb5-20"><a href="#cb5-20" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">&#39;Number of locations in analysis&#39;</span>) <span class="sc">+</span></span>
 <span id="cb5-21"><a href="#cb5-21" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">&#39;Bias&#39;</span>)</span>
-<span id="cb5-22"><a href="#cb5-22" tabindex="-1"></a>fig8_1d <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(<span class="at">data =</span> results, <span class="fu">aes</span>(<span class="at">x =</span> theta_inp, <span class="at">y =</span> bias, <span class="at">color =</span> <span class="fu">factor</span>(fried))) <span class="sc">+</span></span>
+<span id="cb5-22"><a href="#cb5-22" tabindex="-1"></a>fig8_1d <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(<span class="at">data =</span> results, <span class="fu">aes</span>(<span class="at">x =</span> spillover_interval, <span class="at">y =</span> bias, <span class="at">color =</span> <span class="fu">factor</span>(fried))) <span class="sc">+</span></span>
 <span id="cb5-23"><a href="#cb5-23" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">size =</span> <span class="dv">2</span>, <span class="at">se =</span> <span class="cn">FALSE</span>, <span class="at">show.legend =</span> <span class="cn">FALSE</span>, <span class="at">method =</span> <span class="st">&quot;loess&quot;</span>, <span class="at">span =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
 <span id="cb5-24"><a href="#cb5-24" tabindex="-1"></a>  <span class="fu">scale_colour_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">&quot;#b2df8a&quot;</span>,<span class="st">&quot;#D55E00&quot;</span>,<span class="st">&quot;#0072A7&quot;</span>)) <span class="sc">+</span></span>
 <span id="cb5-25"><a href="#cb5-25" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">&#39;Simulated spillover interval (km)&#39;</span>) <span class="sc">+</span></span>

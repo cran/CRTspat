@@ -2,7 +2,7 @@
 % Please edit documentation in R/designCRT.R
 \name{CRTpower}
 \alias{CRTpower}
-\title{Power and sample size calculations for a CRT}
+\title{Power and sample size calculations for a cluster randomized trial}
 \usage{
 CRTpower(
   trial = NULL,
@@ -18,7 +18,10 @@ CRTpower(
   ICC = NULL,
   cv_percent = NULL,
   c = NULL,
-  sd_h = 0
+  sd_h = 0,
+  spillover_interval = 0,
+  contaminate_pop_pr = 0,
+  distance_distribution = "normal"
 )
 }
 \arguments{
@@ -53,14 +56,22 @@ CRTpower(
 
 \item{c}{integer: number of clusters in each arm (required if \code{trial} is not specified)}
 
-\item{sd_h}{standard deviation of number of units per cluster (required if \code{trial} is not specified)}
+\item{sd_h}{numeric: standard deviation of number of units per cluster (required if \code{trial} is not specified)}
+
+\item{spillover_interval}{numeric:  95\% spillover interval (km)}
+
+\item{contaminate_pop_pr}{numeric: Proportion of the locations within the 95\% spillover interval.}
+
+\item{distance_distribution}{numeric: algorithm for computing distribution of spillover, with options -
+\code{'empirical'}: empirical distribution;
+\code{'normal'}: normal distribution.}
 }
 \value{
 A list of class \code{'CRTsp'} object comprising the input data, cluster and arm assignments,
 trial description and results of power calculations
 }
 \description{
-\code{CRTpower} carries out power and sample size calculations for CRTs.
+\code{CRTpower} carries out power and sample size calculations for cluster randomized trials.
 }
 \details{
 Power and sample size calculations are for an unmatched two-arm trial. For counts
@@ -71,30 +82,43 @@ the intra-cluster correlation in the outcome (\code{ICC}) as an input. If the co
 the intra-cluster correlation is computed from the coefficient of variation using the formulae
 from \href{https://www.taylorfrancis.com/books/mono/10.1201/9781584888178/cluster-randomised-trials-richard-hayes-lawrence-moulton}{Hayes & Moulton}. If incompatible values for \code{ICC} and \code{cv_percent} are supplied
 then the value of the \code{ICC} is used.\cr\cr
-The calculations do not consider any loss in power due to spillover, loss to follow-up etc..\cr\cr
+The calculations do not consider any loss in power due to loss to follow-up and by default there is no adjustment for effects of spillover.\cr\cr
+Spillover bias can be allowed for using a diffusion model of mosquito movement. If no location or arm assignment information is available
+then \code{contaminate_pop_pr} is used to parameterize the model using a normal approximation for the distribution of distance
+to discordant locations.\cr\cr
+If a trial data frame or \code{'CRTsp'} object is input then this is used to determine the number of locations. If this input object
+contains cluster assignments then the numbers and sizes of clusters in the input data are used to estimate the power.
+If \code{spillover_interval > 0} and \code{distance_distribution = 'empirical'} then effects of spillover are
+incorporated into the power calculations based on the empirical distribution of distances to the nearest
+discordant location. (If \code{distance_distribution is not equal to 'empirical'} then the distribution of distances is assumed to
+be normal.\cr\cr
 If geolocations are not input then power and sample size calculations are based on the scalar input parameters.\cr\cr
-If a trial dataframe or \code{'CRTsp'} object is input then this is used to determine the number of locations. If this input object
-contains cluster assignments then the numbers and sizes of clusters in the input data are used to estimate the power. If buffer zones have been specified
-then separate calculations are made for the core area and for the full site.\cr\cr
-The output is an object of class \code{'CRTsp'} containing any input trial dataframe and values for:
+If buffer zones have been specified in the \code{'CRTsp'} object then separate calculations are made for the core area and for the full site.\cr\cr
+The output is an object of class \code{'CRTsp'} containing any input trial data frame and values for:
 \itemize{
 \item The required numbers of clusters to achieve the specified power.
 \item The design effect based on the input ICC.
-\item Calculations of the nominal power (ignoring any bias caused by spillover, loss to follow-up etc.)\cr
+\item Calculations of the power ignoring any bias caused by loss to follow-up etc.\cr
+\item Calculations of \code{delta}, the expected spillover bias.
 }
 }
 \examples{
 {# Power calculations for a binary outcome without input geolocations
-examplePower1 = CRTpower(locations = 3000, ICC = 0.10, effect = 0.4, alpha = 0.05,
+examplePower1 <- CRTpower(locations = 3000, ICC = 0.10, effect = 0.4, alpha = 0.05,
     outcome_type = 'd', desiredPower = 0.8, yC=0.35, c = 20, sd_h = 5)
 summary(examplePower1)
 # Power calculations for a rate outcome without input geolocations
-examplePower2 = CRTpower(locations = 2000, cv_percent = 40, effect = 0.4, denominator = 2.5,
+examplePower2 <- CRTpower(locations = 2000, cv_percent = 40, effect = 0.4, denominator = 2.5,
     alpha = 0.05, outcome_type = 'e', desiredPower = 0.8, yC = 0.35, c = 20, sd_h=5)
 summary(examplePower2)
-# Example with input geolocations and randomisation
-examplePower3 = CRTpower(trial = readdata('example_site.csv'), desiredPower = 0.8,
+# Example with input geolocations
+examplePower3 <- CRTpower(trial = readdata('example_site.csv'), desiredPower = 0.8,
     effect=0.4, yC=0.35, outcome_type = 'd', ICC = 0.05, c = 20)
 summary(examplePower3)
+# Example with input geolocations, randomisation, and spillover
+example4 <- randomizeCRT(specify_clusters(trial = readdata('example_site.csv'), c = 20))
+examplePower4 <- CRTpower(trial = example4, desiredPower = 0.8,
+    effect=0.4, yC=0.35, outcome_type = 'd', ICC = 0.05, contaminate_pop_pr = 0.3)
+summary(examplePower4)
 }
 }

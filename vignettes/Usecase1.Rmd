@@ -32,7 +32,7 @@ The example uses locations and baseline test positivity data from a site in Keny
 record for each test so there are multiple records of test positivity for many locations.
 
 
-```r
+``` r
 library(CRTspat)
 example_locations <- readdata('example_site.csv')
 # assign the denominator to the baseline data
@@ -50,24 +50,23 @@ summary(exampleCRT)
 ##         Min.   : 1st Qu.: Median : Mean   : 3rd Qu.: Max.   :
 ##       x -3.20    -1.31    -0.24     0.00     1.35     5.16   
 ##       y -5.08    -2.84    -0.17     0.00     2.49     6.16   
-## Total area (within  0.2 km of a location) :  27.6 sq.km
 ## 
-## Geolocation of centroid (radians):
-##           latitude:  longitude:  
+## Total area (within  0.2 km of a location) :  27.6 sq.km
+## Total area (convex hull) :  48.2 sq.km
 ## 
 ## Locations and Clusters
-## ----------------------                                          -            
-## Coordinate system                      (x, y)            
-## Not aggregated. Total records: 3172. Unique locations:          1181            
-## Available clusters (across both arms)                           Not assigned            
-## No randomization          -            
-## No power calculations to report          -            
+## ----------------------                                          -                        
+## Coordinate system                      (x, y)                        
+## Not aggregated. Total records: 3172. Unique locations:          1181                        
+## Available clusters (across both arms)                           Not assigned                        
+## No randomization          -                        
+## No power calculations to report          -                        
 ## 
 ## Other variables in dataset
 ## --------------------------          RDT_test_result  base_denom
 ```
 
-```r
+``` r
 # Aggregate data for multiple observations for the same location Only the (x,y) co-ordinates and numerical
 # auxiliary variables
 example <- aggregateCRT(exampleCRT, auxiliaries = c("RDT_test_result", "base_denom"))
@@ -82,21 +81,23 @@ summary(example)
 ##         Min.   : 1st Qu.: Median : Mean   : 3rd Qu.: Max.   :
 ##       x -3.20    -1.40    -0.30    -0.07     1.26     5.16   
 ##       y -5.08    -2.84     0.19     0.05     2.49     6.16   
+## 
 ## Total area (within  0.2 km of a location) :  27.6 sq.km
+## Total area (convex hull) :  48.2 sq.km
 ## 
 ## Locations and Clusters
-## ----------------------                                          -            
-## Coordinate system                      (x, y)            
-## Locations:                                                      1181            
-## Available clusters (across both arms)                           Not assigned            
-## No randomization          -            
-## No power calculations to report          -            
+## ----------------------                                          -                        
+## Coordinate system                      (x, y)                        
+## Locations:                                                      1181                        
+## Available clusters (across both arms)                           Not assigned                        
+## No randomization          -                        
+## No power calculations to report          -                        
 ## 
 ## Other variables in dataset
 ## --------------------------          RDT_test_result  base_denom
 ```
 
-```r
+``` r
 # Plot map of locations
 plotCRT(example, map = TRUE, showLocations = TRUE, maskbuffer = 0.2)
 ```
@@ -109,7 +110,7 @@ In the example shown here a target cluster size of 50 locations is set, but the 
 the locations leads to considerable variation in the number of locations assigned to each cluster.
 
 
-```r
+``` r
 example_clustered <- specify_clusters(trial = example, h = 50, algorithm = 'NN')
 summary(example_clustered)
 ```
@@ -122,23 +123,25 @@ summary(example_clustered)
 ##         Min.   : 1st Qu.: Median : Mean   : 3rd Qu.: Max.   :
 ##       x -3.20    -1.40    -0.30    -0.07     1.26     5.16   
 ##       y -5.08    -2.84     0.19     0.05     2.49     6.16   
+## 
 ## Total area (within  0.2 km of a location) :  27.6 sq.km
+## Total area (convex hull) :  48.2 sq.km
 ## 
 ## Locations and Clusters
-## ----------------------                                          -            
-## Coordinate system                      (x, y)            
-## Locations:                                                      1181            
-## Available clusters (across both arms)                           24            
-##   Per cluster mean number of points                             49.2            
-##   Per cluster s.d. number of points                             3.9            
-## No randomization          -            
-## No power calculations to report          -            
+## ----------------------                                          -                        
+## Coordinate system                      (x, y)                        
+## Locations:                                                      1181                        
+## Available clusters (across both arms)                           24                        
+##   Per cluster mean number of points                             49.2                        
+##   Per cluster s.d. number of points                             3.9                        
+## No randomization          -                        
+## No power calculations to report          -                        
 ## 
 ## Other variables in dataset
 ## --------------------------          RDT_test_result  base_denom
 ```
 
-```r
+``` r
 plotCRT(example_clustered, map = TRUE, showClusterLabels = TRUE, maskbuffer = 0.2, labelsize = 2)
 ```
 <p>
@@ -152,8 +155,15 @@ are in the [documentation of `CRTanalysis`](../reference/CRTanalysis.html) and
 of [Use Case 5](Usecase5.html).
 
 
-```r
+``` r
 library(Matrix)
+```
+
+```
+## Warning: package 'Matrix' was built under R version 4.3.2
+```
+
+``` r
 examplemesh100 <- readdata("examplemesh100.rds")
 baselineanalysis <- CRTanalysis(trial=example_clustered,
                      method = 'INLA', link='logit', baselineOnly = TRUE,
@@ -167,7 +177,7 @@ baselineanalysis <- CRTanalysis(trial=example_clustered,
 ## Analysis of baseline only, using INLA
 ```
 
-```r
+``` r
 plotCRT(baselineanalysis, map = TRUE, fill = 'prediction')
 ```
 <p>
@@ -179,9 +189,16 @@ A summary of the baseline prevalence at cluster level is used in this example to
 then generate a randomisation based on matched pairs.
 
 
-```r
+``` r
 example_randomized <- randomizeCRT(example_clustered, matchedPair = TRUE,
   baselineNumerator = "RDT_test_result", baselineDenominator = "base_denom")
+```
+
+```
+## *** computed distance to nearest measurements in discordant arm ***
+```
+
+``` r
 summary(example_randomized)
 ```
 
@@ -190,27 +207,29 @@ summary(example_randomized)
 ## 
 ## Summary of coordinates
 ## ----------------------
-##         Min.   : 1st Qu.: Median : Mean   : 3rd Qu.: Max.   :
-##       x -3.20    -1.40    -0.30    -0.07     1.26     5.16   
-##       y -5.08    -2.84     0.19     0.05     2.49     6.16   
+##                Min.   : 1st Qu.: Median : Mean   : 3rd Qu.: Max.   :
+##       x        -3.20    -1.40    -0.30    -0.07     1.26     5.16   
+##       y        -5.08    -2.84     0.19     0.05     2.49     6.16   
+## nearestDiscord -3.47    -0.56    -0.03    -0.12     0.38     1.40   
+## 
 ## Total area (within  0.2 km of a location) :  27.6 sq.km
+## Total area (convex hull) :  48.2 sq.km
 ## 
 ## Locations and Clusters
-## ----------------------                                          -            
-## Coordinate system                      (x, y)            
-## Locations:                                                      1181            
-## Available clusters (across both arms)                           24            
-##   Per cluster mean number of points                             49.2            
-##   Per cluster s.d. number of points                             3.9            
-## S.D. of distance to nearest discordant location (km):           0.56          
-## Cluster randomization:                      Matched pairs randomized            
-## No power calculations to report          -            
+## ----------------------                                          -                        
+## Coordinate system                      (x, y)                        
+## Locations:                                                      1181                        
+## Available clusters (across both arms)                           24                        
+##   Per cluster mean number of points                             49.2                        
+##   Per cluster s.d. number of points                             3.9                        
+## Cluster randomization:                      Matched pairs randomized                        
+## No power calculations to report          -                        
 ## 
 ## Other variables in dataset
 ## --------------------------          RDT_test_result  base_denom  base_num  pair
 ```
 
-```r
+``` r
 plotCRT(example_randomized, map = TRUE, maskbuffer=0.2, legend.position=c(0.8,0.8))
 ```
 <p>

@@ -2,7 +2,7 @@
 % Please edit documentation in R/analyseCRT.R
 \name{compute_mesh}
 \alias{compute_mesh}
-\title{\code{compute_mesh} create objects required for INLA analysis of an object of class \code{"CRTsp"}.}
+\title{Create INLA mesh for spatial analysis}
 \usage{
 compute_mesh(
   trial = trial,
