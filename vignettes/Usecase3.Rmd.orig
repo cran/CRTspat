@@ -36,7 +36,7 @@ CRTscenario3 <- function(c, CRT) {
       GEEanalysis <- CRTanalysis(ex, method = "GEE", baselineOnly = TRUE, excludeBuffer = FALSE,
           baselineNumerator = "RDT_test_result", baselineDenominator = "base_denom")
     locations <- GEEanalysis$description$locations
-    ICC <- GEEanalysis$pt_ests$ICC
+    ICC <- GEEanalysis$description$ICC
     value <- c(c = c, ICC = ICC, mean_h = locations/c)
     return(value)
 }
@@ -58,7 +58,7 @@ ggplot(data = results, aes(x = mean_h, y = ICC)) + geom_smooth() +
   ylim(0.08, 0.15) + xlim(10, 600)
 ```
 <p>
-    <img src="example3b.r-1.png" > <br>
+    <img src="example3b.r-1.png" alt="" > <br>
     <em>Fig 3.1 Intracluster correlation by size of cluster</em>
 </p>
 
