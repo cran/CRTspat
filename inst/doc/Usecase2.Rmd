@@ -46,9 +46,9 @@ summary(example_randomized)
 ## Summary of coordinates
 ## ----------------------
 ##                Min.   : 1st Qu.: Median : Mean   : 3rd Qu.: Max.   :
-##       x        -3.20    -1.40    -0.30    -0.07     1.26     5.16   
-##       y        -5.08    -2.84     0.19     0.05     2.49     6.16   
-## nearestDiscord -3.47    -0.49     0.04     0.14     0.74     3.30   
+##       x        -3.20    -1.39    -0.30    -0.07     1.25     5.16   
+##       y        -5.07    -2.84     0.19     0.05     2.49     6.16   
+## nearestDiscord -3.47    -0.49     0.03     0.14     0.73     3.30   
 ## 
 ## Total area (within  0.2 km of a location) :  27.6 sq.km
 ## Total area (convex hull) :  48.2 sq.km
@@ -85,9 +85,9 @@ summary(example2a)
 ## Summary of coordinates
 ## ----------------------
 ##                Min.   : 1st Qu.: Median : Mean   : 3rd Qu.: Max.   :
-##       x        -3.20    -1.40    -0.30    -0.07     1.26     5.16   
-##       y        -5.08    -2.84     0.19     0.05     2.49     6.16   
-## nearestDiscord -3.47    -0.49     0.04     0.14     0.74     3.30   
+##       x        -3.20    -1.39    -0.30    -0.07     1.25     5.16   
+##       y        -5.07    -2.84     0.19     0.05     2.49     6.16   
+## nearestDiscord -3.47    -0.49     0.03     0.14     0.73     3.30   
 ## 
 ## Total area (within  0.2 km of a location) :  27.6 sq.km
 ## Total area (convex hull) :  48.2 sq.km
@@ -120,10 +120,10 @@ summary(example2aanalysis)
 ## Link function:  logit 
 ## Model formula:  arm + (1 | cluster) 
 ## No modelling of spillover 
-## Estimates:       Control:  0.386  (95% CL:  0.301 0.478 )
-##             Intervention:  0.191  (95% CL:  0.131 0.269 )
-##                 Efficacy:  0.506  (95% CL:  0.351 0.784 )
-## Coefficient of variation:  49.3 %  (95% CL:  36.5 77.5 )
+## Estimates:       Control: 0.386 (95% CL: 0.301 0.478)
+##             Intervention: 0.191 (95% CL: 0.131 0.269)
+##                 Efficacy: 0.506 (95% CL: 0.351 0.784)
+## Coefficient of variation: 49.27 (95% CL: 36.54 77.525)
 ##  
 ## P-value (2-sided):  0.001224732
 ```
@@ -177,10 +177,6 @@ example2b<- CRTsp(new_site) %>%
 ```
 
 ```
-## *** computed distance to nearest measurements in discordant arm ***
-```
-
-```
 ## Estimating the smoothing required to achieve the target ICC of 0.05
 ```
 
@@ -203,8 +199,8 @@ summary(example2b)
 ## ----------------------
 ##                Min.   : 1st Qu.: Median : Mean   : 3rd Qu.: Max.   :
 ##       x        -8.73    -5.16    -1.03     0.00     5.17    11.26   
-##       y        -9.55    -4.42    -0.58     0.00     4.56    10.45   
-## nearestDiscord -4.20    -0.93     0.00     0.03     0.96     3.94   
+##       y        -9.54    -4.42    -0.57     0.00     4.56    10.44   
+## nearestDiscord -4.19    -0.93     0.00     0.02     0.96     3.94   
 ## 
 ## Total area (within  0.2 km of a location) :  181 sq.km
 ## Total area (convex hull) :  396 sq.km
@@ -232,10 +228,6 @@ results2b <- CRTanalysis(example2b, method = 'GEE')
 ##      -0.6322523      -0.4504233
 ```
 
-```
-## No non-linear parameter.  No fixed effects of distance -
-```
-
 ``` r
 summary(results2b)
 ```
@@ -247,11 +239,11 @@ summary(results2b)
 ## Link function:  logit 
 ## Model formula:  arm 
 ## No modelling of spillover 
-## Estimates:       Control:  0.347  (95% CL:  0.292 0.406 )
-##             Intervention:  0.253  (95% CL:  0.216 0.294 )
-##                 Efficacy:  0.271  (95% CL:  0.0608 0.433 )
-## Coefficient of variation:  50.4 %  (95% CL:  40.5 67.3 )
-## Intracluster correlation (ICC)  :  0.109  (95% CL:  NA NA )
+## Estimates:       Control: 0.347 (95% CL: 0.292 0.406)
+##             Intervention: 0.253 (95% CL: 0.216 0.294)
+##                 Efficacy: 0.271 (95% CL: 0.061 0.433)
+## Coefficient of variation: 50.367 (95% CL: 40.51 67.273)
+## Intracluster correlation: 0.109
 ## 
 ```
 
@@ -265,70 +257,3 @@ plotCRT(example2b, map = TRUE, fill = 'clusters', showClusterLabels = TRUE, mask
 
 #### Example with baseline generated from user-provided values of the overall initial prevalence and ICC
 
-``` r
-set.seed(1234)
-# use co-ordinates, cluster and arm assignments, and baseline data from `example_simulated`
-example2c<- CRTsp(geoscale = 2, locations=2000, kappa=3, mu=40) %>%
-   specify_clusters(h = 40, algorithm = 'NN') %>%
-   randomizeCRT(matchedPair = FALSE) %>%
-   simulateCRT(effect = 0.8,
-       outcome0 = 0.5,
-       generateBaseline = TRUE,
-       baselineNumerator = 'base_num',
-       baselineDenominator = 'base_denom',
-       ICC_inp = 0.08,
-       spillover_interval = 0.2)
-```
-
-```
-## 
-## =====================    SIMULATION OF CLUSTER RANDOMISED TRIAL    =================
-```
-
-```
-## *** computed distance to nearest measurements in discordant arm ***
-```
-
-```
-## Estimating the smoothing required to achieve the target ICC of 0.08
-```
-
-```
-## tol: 0.005 loss = 0.00125339394677766 
-```
-
-```
-## bandwidth: 0.0246321272161409  ICC = 0.115403304178814 loss = 0.00125339394677766 
-```
-
-``` r
-results2c <- CRTanalysis(example2c, method = 'GEE')
-```
-
-```
-##     (Intercept) armintervention 
-##      -0.6677537      -0.3730238
-```
-
-```
-## No non-linear parameter.  No fixed effects of distance -
-```
-
-``` r
-summary(results2c)
-```
-
-```
-## 
-## =====================CLUSTER RANDOMISED TRIAL ANALYSIS =================
-## Analysis method:  GEE 
-## Link function:  logit 
-## Model formula:  arm 
-## No modelling of spillover 
-## Estimates:       Control:  0.339  (95% CL:  0.281 0.402 )
-##             Intervention:  0.261  (95% CL:  0.208 0.322 )
-##                 Efficacy:  0.23  (95% CL:  -0.0152 0.419 )
-## Coefficient of variation:  51.9 %  (95% CL:  41.6 69.6 )
-## Intracluster correlation (ICC)  :  0.115  (95% CL:  NA NA )
-## 
-```

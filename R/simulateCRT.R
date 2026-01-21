@@ -87,8 +87,7 @@
 #' the value of \code{sigma_m} is overwritten
 #' by the standard deviation implicit in the value of \code{spillover_interval}.
 #' Spillover is simulated as arising from a diffusion-like process.
-#'
-#' For further details see [Multerer (2021)](https://edoc.unibas.ch/85228/)
+#' For further details see [Multerer (2021)](https://edoc.unibas.ch/entities/publication/f605ff77-0130-40a0-bff7-5d686fd1e2d0)
 #' @export
 #'
 #' @examples
@@ -116,12 +115,12 @@ simulateCRT <- function(trial = NULL, effect = 0, outcome0 = NULL, generateBasel
     trial <- CRT$trial
 
     if (is.null(trial$cluster)){
-      message("*** Clusters not yet assigned ***")
+      message(" Clusters not yet assigned ")
       return()
     }
     trial$cluster <- as.factor(trial$cluster)
     if (is.null(trial$arm)){
-        message("*** No randomization available ***")
+        message(" No randomization available ")
         return()
     }
     trial$arm <- as.factor(trial$arm)

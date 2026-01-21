@@ -10,8 +10,7 @@
 #' \code{"GEE"} \tab Generalised Estimating Equations \cr
 #' \code{"LME4"} \tab Generalized Linear Mixed-Effects Models \cr
 #' \code{"INLA"}\tab Integrated Nested Laplace Approximation (INLA) \cr
-#' \code{"MCMC"}\tab Markov chain Monte Carlo using \code{"JAGS"} \cr
-#' \code{"WCA"}\tab Within cluster analysis \cr
+#' \code{"MCMC"}\tab Markov chain Monte Carlo using \code{"stan"} \cr
 #' }
 #' @param distance Measure of distance or surround with options: \cr
 #' \tabular{ll}{
@@ -27,6 +26,7 @@
 #' \code{"X"} \tab\tab spillover not modelled\tab the only valid value of \code{cfunc} for methods \code{"EMP"}, \code{"T"} and \code{"GEE"}\cr
 #' \code{"L"} \tab\tab inverse logistic (sigmoid)\tab the default for \code{"INLA"} and \code{"MCMC"} methods\cr
 #' \code{"P"} \tab\tab inverse probit (error function)\tab available with \code{"INLA"} and \code{"MCMC"} methods\cr
+#' \code{"D"} \tab\tab diffusion model\tab only available with the \code{"MCMC"} method\cr
 #' \code{"S"} \tab\tab piecewise linear\tab only available with the \code{"MCMC"} method\cr
 #' \code{"E"} \tab\tab estimation of scale factor\tab only available with \code{distance = "disc"} or \code{distance = "kern"}\cr
 #' \code{"R"} \tab\tab rescaled linear\tab \cr
@@ -49,10 +49,15 @@
 #' @param personalProtection logical: indicator of whether the model includes local effects with no spillover
 #' @param clusterEffects logical: indicator of whether the model includes cluster random effects
 #' @param spatialEffects logical: indicator of whether the model includes spatial random effects
-#' (available only for \code{method = "INLA"})
+#' (available only for \code{method = "INLA"} or for \code{method = "MCMC"})
+#' @param control list: control options to be passed to the statistical fitting function
+#' (available only for \code{method = "MCMC"})
+#' @param pixel numeric: size of pixel in km for spatial model (used for \code{method = "MCMC"})
 #' @param requireMesh logical: indicator of whether spatial predictions are required
 #' (available only for \code{method = "INLA"})
 #' @param inla_mesh string: name of pre-existing INLA input object created by \code{compute_mesh()}
+#' @return list of class \code{CRTanalysis} containing the following results of the analysis:
+#' @param verbose logical: indicator of whether progress indicators, stan code, and the result summary should be returned
 #' @return list of class \code{CRTanalysis} containing the following results of the analysis:
 #' \itemize{
 #' \item \code{description} : description of the dataset
@@ -68,7 +73,7 @@
 #' @details \code{CRTanalysis} is a wrapper for the statistical analysis packages:
 #' [gee](https://CRAN.R-project.org/package=gee),
 #' [INLA](https://www.r-inla.org/),
-#' [jagsUI](https://CRAN.R-project.org/package=jagsUI),
+#' [rstan](https://CRAN.R-project.org/package=rstan),
 #' and the [t.test](https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/t.test)
 #' function of package \code{stats}.\cr\cr
 #' The wrapper does not provide an interface to the full functionality of these packages.
@@ -79,11 +84,13 @@
 #' and can be also be inspected with \code{summary()}, or analysed using \code{stats::fitted()}
 #' for purposes of evaluation of model fit etc..\cr\cr
 #' For models with a complementary log-log link function specified with \code{link = "cloglog"}.
-#' the numerator must be coded as 0 or 1. Technically the binomial denominator is then 1.
-#' The value of \code{denominator} is used as a rate multiplier.\cr\cr
-#' With the \code{"INLA"} and \code{"MCMC"} methods 'iid' random effects are used to model extra-Poisson variation.\cr\cr
+#' the numerator must be coded as 0 or 1. Technically the binomial denominator is then 1 and the
+#' value of \code{denominator} is used as a rate multiplier.\cr\cr
+#' With the \code{"INLA"} method 'iid' random effects are used to model extra-Poisson variation.\cr\cr
 #' Interval estimates for the coefficient of variation of the cluster level outcome are calculated using the method of
-#' [Vangel (1996)](https://www.jstor.org/stable/2685039).
+#' [Vangel (1996)](https://www.jstor.org/stable/2685039).\cr\cr
+#' If a \code{control} list is provided then this is passed to the 'stan' call. In addition to the values allowed by
+#' 'rstan::stan()', the number of iterations can be specified via value of 'iter'.
 #' @export
 #' @examples
 #' \donttest{
@@ -103,22 +110,34 @@ CRTanalysis <- function(
     cfunc = "L", link = "logit", numerator = "num",
     denominator = "denom", excludeBuffer = FALSE, alpha = 0.05,
     baselineOnly = FALSE, baselineNumerator = "base_num", baselineDenominator = "base_denom",
-    personalProtection = FALSE, clusterEffects = TRUE, spatialEffects = FALSE, requireMesh = FALSE,
-    inla_mesh = NULL) {
+    personalProtection = FALSE, clusterEffects = TRUE, spatialEffects = FALSE,
+    pixel = 0.1, control = NULL, requireMesh = FALSE, inla_mesh = NULL, verbose = FALSE) {
 
     CRT <- CRTsp(trial)
 
     cluster <- linearity <- penalty <- distance_type <- NULL
     resamples <- 1000
     penalty <- 0
-    # The prior for the scale parameter should allow this to range from smaller than
+
+    # For models based on "nearestDiscord" the prior for the scale parameter should allow this to range from smaller than
     # any plausible spillover zone, to larger than the study area
-    log_sp_prior <- c(-5, log(max(CRT$trial$x) - min(CRT$trial$x)) + 2)
+    if (identical(distance, "nearestDiscord")) {
+        log_sp_prior <- c(-5, log(max(CRT$trial$x) - min(CRT$trial$x)) + 2)
+    } else {
+    # For models based on surrounds the prior for the scale parameter must be smaller than the distance between locations
+        max_dist <- max(dist(cbind(CRT$trial$x, CRT$trial$y), method = "euclidean"))
+        log_sp_prior <- c(-5, log(max_dist/2))
+    }
 
     # Test of validity of inputs
-    if (!method %in% c("EMP", "T", "MCMC", "GEE", "INLA", "LME4", "WCA"))
+    if (!method %in% c("EMP", "T", "MCMC", "GEE", "INLA", "LME4"))
     {
         stop("*** Invalid value for statistical method ***")
+        return(NULL)
+    }
+    if (identical(cfunc, "D") & !method %in% c("MCMC"))
+    {
+        stop("*** cfunc = 'D' requires method = 'MCMC' ***")
         return(NULL)
     }
     if (identical(method, "INLA") & identical(system.file(package='INLA'), "")){
@@ -138,7 +157,7 @@ CRTanalysis <- function(
             distance <- "dummy"
             CRT$trial$dummy <- runif(nrow(CRT$trial), 0, 1)
         }
-        linearity <- "No non-linear parameter. "
+        linearity <- " with no non-linear parameter. "
         scale_par <- 1.0
     } else {
         if(identical(distance, "nearestDiscord")) {
@@ -166,28 +185,28 @@ CRTanalysis <- function(
             if (distance  %in% c("disc", "kern")) {
                 if (is.null(scale_par)) {
                     penalty <- ifelse(identical(method, "MCMC"), 0, 2)
-                    linearity <- "Estimated scale parameter: "
+                    linearity <- " with estimation of scale parameter. "
                 } else {
-                    linearity <- paste0("Precalculated scale parameter: ")
+                    linearity <- paste0(" with precalculated scale parameter of ", round(scale_par, digits = 3),": ")
                 }
             } else {
                 scale_par <- 1.0
-                linearity <- "No non-linear parameter. "
+                linearity <- " with no non-linear parameter. "
             }
         }
         else if(is.null(scale_par)) {
             if(identical(distance_type, "Surround: ") & identical(cfunc, "E")){
                 # message("Estimated escape function )
-            } else if (!cfunc %in% c("L", "P", "S")){
+            } else if (!cfunc %in% c("L", "P", "S", "D")){
                 stop("*** Invalid spillover function ***")
                 return(NULL)
             }
             # the goodness-of-fit is penalised if scale_par needs to be estimated
             # (unless this is via MCMC)
             penalty <- ifelse(identical(method, "MCMC"), 0, 2)
-            linearity <- "Estimated scale parameter: "
+            linearity <- " with estimation of scale parameter. "
         } else {
-            linearity <- paste0("Precalculated scale parameter of ", round(scale_par, digits = 3),": ")
+            linearity <- paste0(" with precalculated scale parameter of ", round(scale_par, digits = 3),": ")
         }
     }
 
@@ -199,8 +218,6 @@ CRTanalysis <- function(
 
     trial <- CRT$trial
 
-
-
     if ("buffer" %in% colnames(trial) & excludeBuffer) trial <- trial[!trial$buffer, ]
 
     # trial needs to be ordered for some analyses
@@ -211,7 +228,7 @@ CRTanalysis <- function(
 
     if (baselineOnly){
         # Baseline analyses are available only for GEE and INLA
-        if (method %in% c("EMP", "T", "GEE", "MCMC", "LME4", "WCA"))
+        if (method %in% c("EMP", "T", "GEE", "MCMC", "LME4"))
             {
             method <- "GEE"
             message("Analysis of baseline only, using GEE\n")
@@ -233,6 +250,9 @@ CRTanalysis <- function(
             stop("*** No outcome data to analyse ***")
         }
         trial$y1 <- trial[[numerator]]
+        if (is.null(trial[[denominator]])){
+            stop("*** No denominator specified ***")
+        }
         trial$y0 <- trial[[denominator]] - trial[[numerator]]
         trial$y_off <- trial[[denominator]]
     }
@@ -241,7 +261,7 @@ CRTanalysis <- function(
     fterms <- switch(cfunc,
         Z = NULL,
         X = "arm",
-        "pvar"
+        "effect"
     )
 
     if (personalProtection & cfunc != 'X') fterms <- c(fterms, "arm")
@@ -258,9 +278,10 @@ CRTanalysis <- function(
         if (spatialEffects) fterms <- c(fterms, "f(s, model = spde)")
         if (link %in% c("log", "cloglog")) fterms <- c(fterms, "f(id, model = \'iid\')")
     }
+    if (identical(method, "MCMC")){
+        if (spatialEffects) fterms <- c(fterms, "ICAR")
+    }
     ftext <- paste(fterms, collapse = " + ")
-
-
 
     # create names for confidence limits for use throughout
     CLnames <- c(
@@ -281,13 +302,16 @@ CRTanalysis <- function(
                     log_sp_prior = log_sp_prior,
                     clusterEffects = clusterEffects,
                     spatialEffects = spatialEffects,
+                    pixel = pixel,
+                    control = control,
                     personalProtection = personalProtection,
                     distance_type = distance_type,
                     linearity = linearity,
                     scale_par = scale_par,
-                    penalty = penalty)
+                    penalty = penalty,
+                    verbose = verbose)
 
-    # create scaffolds for lists
+    # scaffolds for lists
     pt_ests <- list(scale_par = NA, personal_protection = NA, spillover_interval = NA)
     int_ests <- list(controlY = NA, interventionY = NA, effect_size = NA)
     model_object <- list()
@@ -304,24 +328,19 @@ CRTanalysis <- function(
            "GEE" = GEEanalysis(analysis = analysis, resamples=resamples),
            "LME4" = LME4analysis(analysis),
            "INLA" = INLAanalysis(analysis, requireMesh = requireMesh, inla_mesh = inla_mesh),
-           "MCMC" = MCMCanalysis(analysis),
-           "WCA" = wc_analysis(analysis, design = CRT$design)
+           "MCMC" = stananalysis(analysis)
     )
-    if (!baselineOnly & !is.null(analysis$pt_ests$controlY)){
-        fittedCurve <- get_curve(x = analysis$pt_ests, analysis = analysis)
-        spillover <- get_spilloverStats(fittedCurve=fittedCurve,
-                                    trial=analysis$trial, distance = distance)
-        # compute indirect effects here
-        analysis <- tidySpillover(spillover, analysis, fittedCurve)
-        if (!identical(method,"EMP")){
-            scale_par <- analysis$options$scale_par
+    if (!identical(method,"EMP")){
+        scale_par <- analysis$options$scale_par
+        if (verbose){
             message(paste0(linearity, ifelse(is.null(scale_par), "",
-            ifelse(identical(scale_par, 1), "", round(scale_par, digits = 3)))," ",
+            ifelse((scale_par == 1), "", round(scale_par, digits = 3)))," ",
             distance_type, "-", ifelse(identical(distance_type, "No fixed effects of distance "),
             "", getDistanceText(distance = distance, scale_par = scale_par)), "\n"))
         }
     }
     class(analysis) <- "CRTanalysis"
+    if (verbose) message(summary(analysis))
     return(analysis)
 }
 
@@ -353,14 +372,13 @@ CRTanalysis <- function(
 #' \code{maskbuffer} from the nearest point.\cr
 #' A warning may be generated if the \code{Matrix} library is not loaded.
 #' @export
-#' @examples
-#' {
+#' @examples{
+#' \donttest{
 #' # low resolution mesh for test dataset
 #' library(Matrix)
-#' library(sp)
 #' example <- readdata('exampleCRT.txt')
 #' exampleMesh=compute_mesh(example, pixel = 0.5)
-#' }
+#' }}
 compute_mesh <- function(trial = trial, offset = -0.1, max.edge = 0.25,
                          inla.alpha = 2, maskbuffer = 0.5, pixel = 0.5)
 {
@@ -389,11 +407,6 @@ compute_mesh <- function(trial = trial, offset = -0.1, max.edge = 0.25,
         # estimation mesh construction
         # dummy call to Matrix. This miraculously allows the loading of the "dgCMatrix" in the mesh to pass the test
         dummy <- Matrix::as.matrix(c(1,1,1,1))
-
-        # dummy use of sp package (sp package is required to pass linux tests although there is no direct use of sp)
-        dummysp <- matrix(c(0,1,0,1), nrow = 2, ncol = 2)
-        colnames(dummysp) <- c("min", "max")
-        dummysp <- sp::Spatial(dummysp)
 
         mesh <- INLA::inla.mesh.2d(
             boundary = buffer, offset = offset, cutoff = 0.05, max.edge = max.edge
@@ -536,77 +549,6 @@ clusterSummary <- function(trial = trial, link = link){
     return(clusterSum)
 }
 
-
-
-wc_analysis <- function(analysis, design) {
-    analysis$pt_ests <- analysis$int_ests <- y1 <- cluster <- y_off <- NULL
-    trial <- analysis$trial
-    link <- analysis$options$link
-    alpha <- analysis$options$alpha
-    distance = analysis$options$distance
-    trial$d <- trial[[distance]]
-    nclusters <- nlevels(trial$cluster)
-    analysis$options <- list(
-         method = "WCA",
-         link = link,
-         distance = distance,
-         alpha = alpha,
-         scale_par = design[[distance]][["scale_par"]]
-    )
-    analysis[[distance]] <- design[[distance]]
-    analysis$nearestDiscord <- design$nearestDiscord
-    fterms <- switch(link,
-                       "identity" = "y1/y_off ~ 1 + d",
-                       "log" = "y1 ~ 1 + d + offset(log(y_off))",
-                       "cloglog" = "y1 ~ 1 + d + offset(log(y_off))",
-                       "logit" = "cbind(y1,y0) ~ 1 + d")
-    formula <- stats::as.formula(paste(fterms, collapse = "+"))
-    pe <- matrix(nrow = 0, ncol = 2)
-    for (cluster in levels(trial$cluster)){
-        glm <- tryCatch(glm(formula = formula, family = "binomial", data = trial[trial$cluster == cluster,])
-            , warning = function(w){ NULL})
-        if (!is.null(glm)) {
-            pe <- rbind(pe, matrix(glm$coefficients, ncol = 2))
-        }
-    }
-    rr <- invlink(link = link, x = pe[ , 1] + pe[, 2])/invlink(link = link, x = pe[ , 1])
-    exact = ifelse(length(unique(rr[!is.infinite(rr)])) == length(rr[!is.infinite(rr)]) , TRUE, FALSE)
-    model_object <- stats::wilcox.test(rr, mu = 1,
-                                alternative = "less", exact = exact, conf.int = TRUE, conf.level = 1 - alpha)
-    model_object$conf.int[1] <- ifelse(model_object$conf.int[1] > 0, model_object$conf.int[1], 0)
-    analysis$pt_ests$effect_size <- 1 - model_object$estimate
-    analysis$int_ests$effect_size <- 1 - rev(unname(model_object$conf.int))
-    analysis$pt_ests$test.statistic <- unname(model_object$statistic)
-    analysis$pt_ests$p.value <- model_object$p.value
-    analysis$model_object <- model_object
-    return(analysis)
-}
-
-wc_summary <- function(analysis){
-    defaultdigits <- getOption("digits")
-    on.exit(options(digits = defaultdigits))
-    options(digits = 3)
-    distance <- analysis$options$distance
-    cat('\nDistance and surround statistics\n')
-    cat('Measure            Minimum    Median    Maximum    S.D.   Within-cluster S.D.   R-squared\n')
-    cat('-------            -------    ------    -------    ----   -------------------   ---------\n')
-    with(analysis$nearestDiscord,cat("Signed distance",
-                                     format(Min., scientific=F), Median,
-                                     format(Max., scientific=F), sd, "   ",
-                                     within_cluster_sd, rSq, "\n", sep = "      "))
-    with(analysis[[distance]],
-         cat(distance, strrep(" ",8-nchar(distance)), Min., Median, Max., sd, "   ", within_cluster_sd, rSq, "\n", sep = "      "))
-    cat("\nClusters assigned    : ", analysis$description$nclusters, "\n")
-    cat("Clusters analysed    : ", analysis$description$nclusters, "\n")
-    cat("Wilcoxon statistic   : ", analysis$pt_ests$statistic, "\n")
-    cat("P-value (1-sided)    : ", analysis$pt_ests$p.value, "\n")
-    cat(
-        "Effect size estimate : ", analysis$pt_ests$effect_size,
-         paste0(" (", 100 * (1 - analysis$options$alpha), "% CL: "), unlist(analysis$int_ests$effect_size),")\n"
-    )
-}
-
-
 GEEanalysis <- function(analysis, resamples){
     trial <- analysis$trial
     link <- analysis$options$link
@@ -715,7 +657,7 @@ LME4analysis <- function(analysis, cfunc, trial, link, fterms){
     trial <- analysis$trial
     link <- analysis$options$link
     cfunc <- analysis$options$cfunc
-    FUN <- get_FUN(cfunc, variant = 0)
+    FUN <- get_FUN(cfunc)
     alpha <- analysis$options$alpha
     scale_par <- analysis$options$scale_par
     distance <- analysis$options$distance
@@ -752,17 +694,16 @@ LME4analysis <- function(analysis, cfunc, trial, link, fterms){
             scale_par <- exp(log_scale_par)
         }
         analysis$options$scale_par <- scale_par
-
-        if (distance %in% c('disc','kern')) {
-            trial <- compute_distance(trial,
-                                      distance = distance, scale_par = scale_par)$trial
-            x <- trial[[distance]]
-            analysis$trial <- trial
-        } else {
-            x <- trial[[distance]] / scale_par
-        }
-        trial$pvar <- eval(parse(text = FUN))
     }
+    if (distance %in% c('disc','kern')) {
+        trial <- compute_distance(trial,
+                                  distance = distance, scale_par = scale_par)$trial
+        x <- trial[[distance]]
+        analysis$trial <- trial
+    } else {
+        x <- trial[[distance]] / scale_par
+    }
+    trial$effect <- eval(parse(text = FUN))
     model_object <- switch(link,
                            "identity" = lme4::lmer(formula = formula, data = trial, REML = FALSE),
                            "log" = lme4::glmer(formula = formula, data = trial,
@@ -784,24 +725,26 @@ LME4analysis <- function(analysis, cfunc, trial, link, fterms){
     analysis$pt_ests$df <- analysis$pt_ests$df - (analysis$options$penalty > 0)
     coefficients <- summary(model_object)$coefficients
     if (!identical(distance_type, "No fixed effects of distance ")) {
-        WaldP <- ifelse(ncol(coefficients) == 4, coefficients['pvar',4], NA)
+        WaldP <- ifelse(ncol(coefficients) == 4, coefficients['effect',4], NA)
     }
-    if (grepl("pvar", ftext, fixed = TRUE) |
+    if (grepl("effect", ftext, fixed = TRUE) |
         grepl("arm", ftext, fixed = TRUE)) {
         q50 <- summary(model_object)$coefficients[,1]
         names(q50)[grep("Int",names(q50))] <- "int"
         names(q50)[grep("arm",names(q50))] <- "arm"
-        names(q50)[grep("pvar",names(q50))] <- "pvar"
+        names(q50)[grep("effect",names(q50))] <- "effect"
         cov <- vcov(model_object)
         rownames(cov) <- colnames(cov) <- names(q50)
     }
     analysis$model_object <- model_object
-    if (!identical(cfunc, "Z")){
-        sample <- as.data.frame(MASS::mvrnorm(n = 10000, mu = q50, Sigma = cov))
-        analysis <- extractEstimates(analysis = analysis, sample = sample)
+    if (identical(cfunc, "Z")){
+        sample <- data.frame(int = rnorm(n  = 10000,
+                                         mean = summary(model_object)$coefficients[,1],
+                                         sd = summary(model_object)$coefficients[,2]))
     } else {
-        analysis$pt_ests$controlY <- invlink(link, summary(model_object)$coefficients[,1])
+        sample <- as.data.frame(MASS::mvrnorm(n = 10000, mu = q50, Sigma = cov))
     }
+    analysis <- extractEstimates(analysis = analysis, sample = sample)
     return(analysis)
 }
 
@@ -815,7 +758,7 @@ INLAanalysis <- function(analysis, requireMesh = requireMesh, inla_mesh = inla_m
     linearity <- analysis$options$linearity
     scale_par <- analysis$options$scale_par
     alpha <- analysis$options$alpha
-    FUN <- get_FUN(cfunc, variant = 0)
+    FUN <- get_FUN(cfunc)
     fterms <- analysis$options$fterms
     # TODO replace the use of ftext with fterms
     ftext <- analysis$options$ftext
@@ -854,7 +797,7 @@ INLAanalysis <- function(analysis, requireMesh = requireMesh, inla_mesh = inla_m
     effectsp <- list(df = dfp, s = inla_mesh$indexs)
 
     lc <- NULL
-    FUN <- get_FUN(cfunc=cfunc, variant = 0)
+    FUN <- get_FUN(cfunc)
     log_scale_par <- ifelse(is.null(scale_par), NA, log(scale_par))
     if (!identical(distance_type, "No fixed effects of distance ")) {
         if (analysis$options$penalty > 0) {
@@ -879,25 +822,25 @@ INLAanalysis <- function(analysis, requireMesh = requireMesh, inla_mesh = inla_m
         if (distance %in% c("disc", "kern")) {
             trial <- compute_distance(trial, distance = distance, scale_par = scale_par)$trial
             x <- trial[[distance]]
-            trial$pvar <- eval(parse(text = FUN))
+            trial$effect <- eval(parse(text = FUN))
             analysis$trial <- trial
             inla_mesh$prediction[[distance]] <-
                 trial[[distance]][inla_mesh$prediction$nearestNeighbour]
             x <- inla_mesh$prediction[[distance]]
         } else {
             x <- trial[[distance]]/scale_par
-            trial$pvar <- eval(parse(text = FUN))
+            trial$effect <- eval(parse(text = FUN))
             inla_mesh$prediction[[distance]] <-
                 trial[[distance]][inla_mesh$prediction$nearestNeighbour]
             x <- inla_mesh$prediction[[distance]]/scale_par
         }
-        inla_mesh$prediction$pvar <- eval(parse(text = FUN))
-        effectse$df$pvar <- trial$pvar
-        effectsp$df$pvar <- inla_mesh$prediction$pvar
+        inla_mesh$prediction$effect <- eval(parse(text = FUN))
+        effectse$df$effect <- trial$effect
+        effectsp$df$effect <- inla_mesh$prediction$effect
         # set up linear contrasts
-        lc <- INLA::inla.make.lincomb(int = 1, pvar = 1)
+        lc <- INLA::inla.make.lincomb(int = 1, effect = 1)
         if (grepl("arm", ftext, fixed = TRUE)){
-            lc <- INLA::inla.make.lincomb(int = 1, pvar = 1, arm = 1)
+            lc <- INLA::inla.make.lincomb(int = 1, effect = 1, arm = 1)
         }
     } else if (grepl("arm", ftext, fixed = TRUE)) {
         lc <- INLA::inla.make.lincomb(int = 1, arm = 1)
@@ -967,7 +910,7 @@ INLAanalysis <- function(analysis, requireMesh = requireMesh, inla_mesh = inla_m
     # Compute sample-based confidence limits for intervened outcome and effect_size
     # intervention effects are estimated
     q50 <- cov <- list()
-    if (grepl("pvar", ftext, fixed = TRUE) |
+    if (grepl("effect", ftext, fixed = TRUE) |
         grepl("arm", ftext, fixed = TRUE)) {
         # Specify the point estimates of the parameters
         q50 <- model_object$summary.lincomb.derived$"0.5quant"
@@ -985,163 +928,6 @@ INLAanalysis <- function(analysis, requireMesh = requireMesh, inla_mesh = inla_m
         analysis$pt_ests$controlY <- invlink(link, model_object$summary.fixed[["0.5quant"]])
     }
 return(analysis)
-}
-
-MCMCanalysis <- function(analysis){
-    trial <- analysis$trial
-    link <- analysis$options$link
-    cfunc <- analysis$options$cfunc
-    alpha <- analysis$options$alpha
-    fterms <- analysis$options$fterms
-    linearity <- analysis$options$linearity
-    personalProtection <- analysis$options$personalProtection
-    distance <- analysis$options$distance
-    scale_par <- analysis$options$scale_par
-    log_sp_prior <- analysis$options$log_sp_prior
-    clusterEffects<- analysis$options$clusterEffects
-    FUN <- get_FUN(cfunc, variant = 0)
-    nsteps <- 10
-
-    # JAGS parameters
-    nchains <- 4
-    iter.increment <- 2000
-    max.iter <- 50000
-    n.burnin <- 1000
-
-    datajags <- list(N = nrow(trial))
-    if (identical(linearity,"Estimated scale parameter: ")) {
-        # Create vector of candidate values of scale_par
-        # by dividing the prior (on log scale) into equal bins
-        # log_sp is the central value of each bin
-        nbins <- 10
-        binsize <- (log_sp_prior[2] - log_sp_prior[1])/(nbins - 1)
-        log_sp <- log_sp_prior[1] + c(0, seq(1:(nbins - 1))) * binsize
-        # calculate pvar corresponding to first value of sp
-        Pr <- compute_pvar(trial = trial, distance = distance,
-                           scale_par = exp(log_sp[1]), FUN = FUN)
-        for(i in 1:(nbins - 1)){
-            Pri <- compute_pvar(trial = trial,
-                                distance = distance, scale_par = exp(log_sp[1 + i]), FUN = FUN)
-            Pr <- data.frame(cbind(Pr, Pri))
-        }
-        log_sp1 <- c(log_sp + binsize/2, log_sp[nbins - 1] + binsize/2)
-        datajags$Pr <- as.matrix(Pr)
-        datajags$nbins <- nbins
-        datajags$log_sp <- log_sp
-        cfunc <- "O"
-    } else if (identical(cfunc, "R")) {
-        trial <- compute_distance(trial, distance = distance,
-                                  scale_par = scale_par)$trial
-        datajags$d <- trial[[distance]]
-        datajags$mind <- min(trial[[distance]])
-        datajags$maxd <- max(trial[[distance]])
-    }
-    if ("arm" %in% fterms) {
-        datajags$intervened <- ifelse(trial$arm == "intervention", 1, 0)
-    }
-    if (identical(link, 'identity')) {
-        datajags$y <- trial$y1/trial$y_off
-    } else {
-        datajags$y1 <- trial$y1
-        datajags$y_off <- trial$y_off
-    }
-    if (clusterEffects) {
-        datajags$cluster <- as.numeric(as.character(trial$cluster))
-        datajags$ncluster <- max(as.numeric(as.character(trial$cluster)))
-    }
-    # construct the rjags code by concatenating strings
-
-    text1 <- "model{\n"
-
-    text2 <- switch(cfunc,
-                    X = "for(i in 1:N){\n",
-                    Z = "for(i in 1:N){\n",
-                    R = "for(i in 1:N){\n
-                        pr[i] <- (d[i] - mind)/(maxd - mind)",
-                    O = "pr_s[1] <- pnorm(log_sp[1],log_scale_par,tau.s)
-                        cum_pr[1] <- pr_s[1]
-                        for (j in 1:(nbins - 2)) {
-                            pr_s[j + 1] <- pnorm(log_sp[j + 1],log_scale_par, tau.s) - cum_pr[j]
-                            cum_pr[j + 1] <- pr_s[j + 1] + cum_pr[j]
-                        }
-                        pr_s[nbins] <- 1 - cum_pr[nbins - 1]
-                        for(i in 1:N){\n
-                            for(j in 1:nbins){\n
-                                pr_j[i,j] <- sum(Pr[i,j] * pr_s[j])
-                            }
-                            pr[i] <- sum(pr_j[i, ])
-                         ")
-
-    text3 <- switch(link,
-                    "identity" = "y[i] ~ dnorm(lp[i],tau1) \n",
-                    "log" =  "gamma1[i] ~ dnorm(0,tau1) \n
-                                  Expect_y[i] <- exp(lp[i] + gamma1[i]) * y_off[i] \n
-                                  y1[i] ~ dpois(Expect_y[i]) \n",
-                    "logit" = "logitp[i] <- lp[i]  \n
-                                   p[i] <- 1/(1 + exp(-logitp[i])) \n
-                                   y1[i] ~ dbin(p[i],y_off[i]) \n",
-                    "cloglog" = "gamma1[i] ~ dnorm(0,tau1) \n
-                                   Expect_p[i] <- 1 - exp(- exp(lp[i] + gamma1[i]) * y_off[i]) \n
-                                   y1[i] ~ dbern(Expect_p[i]) \n"
-    )
-
-    # construct JAGS code for the linear predictor
-
-    if (cfunc %in% c('Z', 'X')) {
-        text4 <- "lp[i] <- int"
-    } else {
-        text4 <- "lp[i] <- int + pvar * pr[i]"
-    }
-    text5 <- ifelse(clusterEffects,
-                    " + gamma[cluster[i]] \n
-            }\n
-            for(ic in 1:ncluster) {\n
-                gamma[ic] ~ dnorm(0, tau)\n
-            }\n
-            tau <- 1/(sigma * sigma) \n
-            sigma ~ dunif(0, 2) \n
-            ", "}\n")
-    text6 <-
-        "log_scale_par ~ dnorm(0, 1E-1) \n
-            scale_par <- exp(log_scale_par) \n
-            tau.s ~ dunif(0,3) \n
-            int ~ dnorm(0, 1E-2) \n"
-    if ("arm" %in% fterms) {
-        text4 <- paste0(text4, " + arm * intervened[i]")
-        text6 <- paste(text6, "arm ~ dnorm(0, 1E-2) \n")
-    }
-    text7 <- ifelse(identical(cfunc,'Z'), "pvar <- 0 \n", "pvar ~ dnorm(0, 1E-2) \n")
-    text8 <- switch(link,
-                    "identity" = "tau1 <- 1/(sigma1 * sigma1) \n
-                                  sigma1 ~ dunif(0, 2) } \n",
-                    "log" = "tau1 <- 1/(sigma1 * sigma1) \n
-                             sigma1 ~ dunif(0, 2) } \n",
-                    "cloglog" = "tau1 <- 1/(sigma1 * sigma1) \n
-                             sigma1 ~ dunif(0, 2) } \n",
-                    "logit" = "} \n")
-
-    MCMCmodel <- paste0(text1, text2, text3, text4, text5, text6, text7, text8)
-    if (identical(cfunc, "E")) cfunc = "ES"
-    parameters.to.save <- switch(cfunc, O = c("int", "pvar", "scale_par"),
-                                 X = c("int"),
-                                 Z = c("int"),
-                                 R = c("int", "pvar"))
-    if ("arm" %in% fterms) parameters.to.save <- c(parameters.to.save, "arm")
-    model_object <- jagsUI::autojags(data = datajags, inits = NULL,
-                                     parameters.to.save = parameters.to.save,
-                                     model.file = textConnection(MCMCmodel), n.chains = nchains,
-                                     iter.increment = iter.increment, n.burnin = n.burnin, max.iter=max.iter)
-    sample <- data.frame(rbind(model_object$samples[[1]],model_object$samples[[2]]))
-    model_object$MCMCmodel <- MCMCmodel
-    analysis$model_object <- model_object
-    analysis$trial <- trial
-    analysis <- extractEstimates(analysis = analysis, sample = sample)
-    analysis$options$scale_par <- analysis$pt_ests$scale_par
-    # distance must be re-computed in the case of surrounds with estimated scale parameter
-    analysis$trial <- compute_distance(trial, distance = distance,
-                                       scale_par = analysis$options$scale_par)$trial
-    analysis$pt_ests$DIC <- model_object$DIC
-    return(analysis)
 }
 
 group_data <- function(analysis, distance = NULL, grouping = "quintiles"){
@@ -1334,6 +1120,7 @@ estimateCLeffect_size <- function(q50, Sigma, alpha, resamples, method, link)
 
 
 # Calculate the distance or surround for an arbitrary location
+# TODO: this seems to be orphan code
 calculate_singlevalue <- function(i, trial , prediction , distM, distance, scale_par){
     if (identical(distance, "nearestDiscord")) {
         discords <- (trial$arm != prediction$arm[i])
@@ -1363,7 +1150,7 @@ estimateSpilloverINLA <- function(
     } else {
         x <- trial[[distance]]/exp(log_scale_par)
     }
-    trial$pvar <- eval(parse(text = FUN))
+    trial$effect <- eval(parse(text = FUN))
 
     stk.e <- INLA::inla.stack(
         tag = "est", data = list(y1 = trial$y1, y_off = trial$y_off),
@@ -1372,7 +1159,7 @@ estimateSpilloverINLA <- function(
             data.frame(
                 int = rep(1, nrow(trial)),
                 arm = ifelse(trial$arm == "intervention", 1, 0),
-                pvar = trial$pvar, id = trial$id, cluster = trial$cluster
+                effect = trial$effect, id = trial$id, cluster = trial$cluster
             ),
             s = inla_mesh$indexs
         )
@@ -1427,7 +1214,7 @@ estimateSpilloverLME4 <- function(
     } else {
         x <- trial[[distance]]/exp(log_scale_par)
     }
-    trial$pvar <- eval(parse(text = FUN))
+    trial$effect <- eval(parse(text = FUN))
     try(
     model_object <- switch(link,
                 "identity" = lme4::lmer(formula = formula, data = trial, REML = FALSE),
@@ -1441,27 +1228,40 @@ estimateSpilloverLME4 <- function(
     loss <- ifelse (is.null(model_object),999999, unlist(summary(model_object)$AICtab["AIC"]))
     # The AIC is used as a loss function
     # Display the AIC here if necessary for debugging
-    # messag"\rAIC: ", loss + 2, " Spillover scale parameter: ", exp(log_scale_par), "  \n")
+    message ("\rAIC: ", loss + 2, " Spillover scale parameter: ", exp(log_scale_par), "  \n")
     return(loss)
 }
 
-
 # Add estimates to analysis list
-add_estimates <- function(analysis, bounds, CLnames){
-    bounds <- data.frame(bounds)
-    for (variable in c("int", "arm", "pvar",
-                      "controlY","interventionY","effect_size",
-                      "personal_protection","scale_par",
-                      "deviance","spillover_interval","spillover_limit0",
-                      "spillover_limit1","contaminate_pop_pr",
-                      "total_effect", "ipsilateral_spillover",
-                      "contralateral_spillover")) {
-        if (variable %in% colnames(bounds)) {
-            analysis$pt_ests[[variable]] <- bounds[2, variable]
-            analysis$int_ests[[variable]] <- stats::setNames(
-                bounds[c(1, 3), variable], CLnames)
+add_estimates <- function(analysis, sample, CLnames, alpha, pt_src){
+    intervals_to_output <- c("int", "effect",
+                             "controlY","interventionY","effect_size",
+                             "personal_protection","scale_par",
+                             "deviance","spillover_interval","spillover_limit0",
+                             "spillover_limit1","contaminate_pop_pr",
+                             "total_effect", "ipsilateral_spillover",
+                             "contralateral_spillover")
+    for (var in intervals_to_output) {
+        if(var %in% names(sample)) {
+            quantiles <- quantile(sample[, var], c(alpha/2, 0.5, 1 - alpha/2),
+                                     alpha = alpha, na.rm = TRUE)
+            analysis[[pt_src]][[var]] <- quantiles[2]
+            analysis$int_ests[[var]] <- stats::setNames(quantiles[c(1, 3)], CLnames)
         }
     }
+    # If the scale parameter has been estimated then replace the input value
+    # with the estimate. Otherwise vice versa.
+    if ("scale_par" %in% names(sample)) {
+        analysis$options$scale_par <- analysis$pt_ests$scale_par
+    } else {
+        analysis$pt_ests$scale_par <- analysis$options$scale_par
+    }
+    if ("spillover_limit0" %in% names(sample)) {
+        analysis$spillover$spillover_limits <- c(analysis$spillover$spillover_limit0,
+                                                 analysis$spillover$spillover_limit1)
+    }
+    if ("spillover_interval" %in% names(sample))
+        analysis$pt_ests$spillover_interval <- analysis$spillover$spillover_interval
 return(analysis)
 }
 
@@ -1505,181 +1305,153 @@ Tinterval <- function(x, alpha, option){
     returnvalue <- as.numeric(value)
 }
 
-
-#' Summary of the results of a statistical analysis of a CRT
-#'
-#' \code{summary.CRTanalysis} generates a summary of a \code{CRTanalysis} including the main results
-#' @param object an object of class \code{"CRTanalysis"}
-#' @param ... other arguments used by summary
-#' @method summary CRTanalysis
-#' @export
-#' @return No return value, writes text to the console.
-#' @examples
-#' {example <- readdata('exampleCRT.txt')
-#' exampleT <- CRTanalysis(example, method = "T")
-#' summary(exampleT)
-#' }
-summary.CRTanalysis <- function(object, ...) {
-    defaultdigits <- getOption("digits")
-    on.exit(options(digits = defaultdigits))
-    options(digits = 3)
-    scale_par <- object$options$scale_par
-    cat("\n=====================CLUSTER RANDOMISED TRIAL ANALYSIS =================\n")
-    cat(
-        "Analysis method: ", object$options$method, "\nLink function: ", object$options$link, "\n")
-    if(!identical(object$options$distance_type,"No fixed effects of distance ")){
-        cat(paste0("Measure of distance or surround: ", getDistanceText(distance = object$options$distance,
-                 scale_par = scale_par),"\n"))
-        if (!is.null(object$options$linearity)){
-            cat(object$options$linearity)
-            if (!is.null(scale_par)) cat(paste0(round(scale_par, digits = 3),"\n"))
-        }
-    }
-    if (identical(object$options$method,"WCA")) {
-        wc_summary(object)
-    } else {
-        if (!is.null(object$options$ftext))
-            cat("Model formula: ", object$options$ftext, "\n")
-        cat(switch(object$options$cfunc,
-                   Z = "No comparison of arms \n",
-                   X = "No modelling of spillover \n",
-                   S = "Piecewise linear function for spillover\n",
-                   P = "Error function model for spillover\n",
-                   L = "Sigmoid (logistic) function for spillover\n",
-                   R = "Rescaled linear function for spillover\n"))
-        CLtext <- paste0(" (", 100 * (1 - object$options$alpha), "% CL: ")
-        cat(
-            "Estimates:       Control: ", object$pt_ests$controlY,
-            CLtext, unlist(object$int_ests$controlY),
-            ")\n"
-        )
-        if (!is.null(object$pt_ests$effect_size))
-        {
-            if (!is.null(object$pt_ests$interventionY))
-            {
-                cat(
-                    "            Intervention: ", object$pt_ests$interventionY,
-                    CLtext, unlist(object$int_ests$interventionY),
-                    ")\n"
-                )
-                effect.distance <- ifelse(object$options$link == 'identity', "Effect size: ","    Efficacy: ")
-                cat("           ",
-                    effect.distance, object$pt_ests$effect_size, CLtext, unlist(object$int_ests$effect_size),
-                    ")\n"
-                )
-            }
-            if (!is.na(object$pt_ests$personal_protection))
-            {
-                cat(
-                    "Personal protection %   : ",
-                    object$pt_ests$personal_protection*100,
-                    CLtext, unlist(object$int_ests$personal_protection*100),
-                        ")\n"
-                )
-                if (object$pt_ests$personal_protection < 0 | object$pt_ests$personal_protection >  1){
-                    cat(
-                        "** Warning: different signs for main effect and personal protection effect:
-                face validity check fails **\n")
-                }
-            }
-            if (!identical(object$options$distance_type, "No fixed effects of distance ")){
-                if (!is.null(object$pt_ests$spillover_interval)){
-                    cat(
-                        "Spillover interval(km):     ", object$pt_ests$spillover_interval,
-                        CLtext, unlist(object$int_ests$spillover_interval),
-                        ")\n"
-                    )
-                }
-                if (!is.null(object$spillover$contaminate_pop_pr)){
-                    cat(
-                        "% locations contaminated:",
-                        object$spillover$contaminate_pop_pr*100,
-                        CLtext, unlist(object$int_ests$contaminate_pop_pr)*100,
-                        "%)\n")
-                }
-            }
-            if (!is.null(object$int_ests$total_effect)) {
-                cat("Total effect            :", object$pt_ests$total_effect,
-                    CLtext, unlist(object$int_ests$total_effect),")\n")
-                cat("Ipsilateral Spillover   :", object$pt_ests$ipsilateral_spillover,
-                    CLtext, unlist(object$int_ests$ipsilateral_spillover),")\n")
-                cat("Contralateral Spillover :", object$pt_ests$contralateral_spillover,
-                    CLtext, unlist(object$int_ests$contralateral_spillover),")\n")
-            }
-        }
-        if (!is.null(object$description$cv_percent))
-            cat("Coefficient of variation: ", object$description$cv_percent,"%",
-                CLtext, object$description$cv_lower, object$description$cv_upper,")\n"
-            )
-        if (!is.null(object$pt_ests$ICC))
-        {
-            cat(
-                "Intracluster correlation (ICC)  : ", object$pt_ests$ICC,
-                CLtext, unlist(object$int_ests$ICC),")\n"
-            )
-        }
-        options(digits = defaultdigits)
-        # goodness of fit
-        if (!is.null(object$pt_ests$deviance)) cat("deviance: ", object$pt_ests$deviance, "\n")
-        if (!is.null(object$pt_ests$DIC)) cat("DIC     : ", object$pt_ests$DIC)
-        if (!is.null(object$pt_ests$AIC)) cat("AIC     : ", object$pt_ests$AIC)
-        if (object$options$penalty > 0) {
-            cat(" including penalty for the spillover scale parameter\n")
-        } else {
-            cat(" \n")
-        }
-    # TODO: add the degrees of freedom to the output
-        if (!is.null(object$pt_ests$p.value)){
-            cat("P-value (2-sided): ", object$pt_ests$p.value, "\n")
-        }
-    }
-}
-
-
 extractEstimates <- function(analysis, sample) {
     alpha <- analysis$options$alpha
     link <- analysis$options$link
+    cfunc <- analysis$options$cfunc
     method <- analysis$options$method
+    trial <- analysis$trial
     distance <- analysis$options$distance
     CLnames <- analysis$options$CLnames
     scale_par <- analysis$options$scale_par
     sample$controlY <- invlink(link, sample$int)
     # personal_protection is the proportion of effect attributed to personal protection
-    if ("arm" %in% names(sample) & "pvar" %in% names(sample)) {
+    if ("arm" %in% names(sample) & "effect" %in% names(sample)) {
         if (method %in% c("MCMC","LME4")) {
-            sample$lc <- with(sample, int + pvar + arm)
+            sample$lc <- with(sample, int + effect + arm)
         }
         sample$interventionY <- invlink(link, sample$lc)
         sample$personal_protection <- with(
-            sample, (controlY - invlink(link, int + arm))/(controlY -
-                                                               interventionY))
+                sample, (controlY - invlink(link, int + arm))/(controlY -
+                                                           interventionY))
     } else {
         sample$personal_protection <- NA
     }
-    if ("arm" %in% names(sample) & !("pvar" %in% names(sample))) {
+    if ("arm" %in% names(sample) & !("effect" %in% names(sample))) {
         sample$interventionY <- invlink(link, sample$int + sample$arm)
     }
-    if ("pvar" %in% names(sample) & !("arm" %in% names(sample))) {
-        sample$interventionY <- invlink(link, sample$int + sample$pvar)
+    if ("effect" %in% names(sample) & !("arm" %in% names(sample))) {
+        sample$interventionY <- invlink(link, sample$int + sample$effect)
     }
+    # Values of distance for calculation of spillover curves
+    if ((distance %in% c("disc", "kern")) & identical(cfunc, "E")){
+        range_d <- 1
+        d <- (seq(1:1001) - 1)/1000
+        trial[[distance]] <- NA #This is a placeholder for the sample from the estimated surround which will be returned
+    } else {
+        range_d <- max(trial[[distance]]) - min(trial[[distance]])
+        range_d <- max(range_d, 1.0E-3)
+        d <- min(trial[[distance]]) + range_d * (seq(1:1001) - 1)/1000
+    }
+
+    # MEASURES OF SPILLOVER
+    if (is.null(sample$scale_par)) sample$scale_par <- scale_par
+    if (is.null(sample$scale_par)) sample$scale_par <- 1
+
+    if (!(cfunc %in% c("X", "Z"))){
+
+        spillover_list <- apply(sample, MARGIN = 1, FUN = get_spillover,
+                                    analysis = analysis)
+
+        spillover_df <- as.data.frame(do.call(rbind, lapply(spillover_list, as.data.frame)))
+        sample <- cbind(sample, spillover_df)
+
+        # Measures calculated once for each data point
+        trial$sample_no <- sample(seq(1:nrow(sample)), nrow(trial), replace = TRUE)
+        trial$rowname <- rownames(trial)
+        curves <- t(apply(trial, MARGIN = 1, FUN = computeFittedCurve, trial = trial, sample = sample, d = d,
+                        link = link, cfunc = cfunc, distance = distance, alpha = alpha))
+
+        trial[[distance]] <- curves[, 1] # The first column is a sample from the distribution of the distance variable
+        trial$fitted_value <- curves[, 2] # The second column is a sample from the distribution of the fitted value
+        trial$spillover_limit0 <- curves[, 3]
+        trial$spillover_limit1 <- curves[, 4]
+
+        trial$contaminate_pop_pr <- sum(trial[[distance]] > trial$spillover_limit0 &
+                                             trial[[distance]] < trial$spillover_limit1)/nrow(trial)
+        trial$spillover_interval <- abs(trial$spillover_limit1 - trial$spillover_limit0)
+
+        # To remove warnings from plotting ensure that spillover interval is non-zero
+        trial$spillover_limit0 <- ifelse(trial$spillover_interval < 2e-04, -1e-04, trial$spillover_limit0)
+        trial$spillover_limit1 <- ifelse(trial$spillover_interval < 2e-04, 1e-04, trial$spillover_limit1)
+        trial$ipsilateral_spillover <- ifelse(trial$arm == 'intervention',
+                            trial$fitted_value - sample[trial$sample_no, "interventionY"], NA)
+        trial$contralateral_spillover <- ifelse(trial$arm == 'control',
+                            sample[trial$sample_no, "controlY"] - trial$fitted_value, NA)
+
+        trial$spillover_limit0 <- ifelse(trial$spillover_interval < 2e-04, -1e-04, trial$spillover_limit0)
+        trial$spillover_limit1 <- ifelse(trial$spillover_interval < 2e-04, 1e-04, trial$spillover_limit1)
+        # Point and interval estimates of the fitted curve
+        FittedCurve <- data.frame(t(apply(
+            curves[, seq(5,1005)], 2, function(x) {quantile(x, c(alpha/2, 0.5, 1 - alpha/2),
+                                            alpha = alpha, na.rm = TRUE)})))
+        FittedCurve$intervention_curve <- ifelse(d >= 0, FittedCurve$X50., NA)
+        FittedCurve$control_curve <- ifelse(d < 0, FittedCurve$X50., NA)
+        FittedCurve$X50. <- NULL
+    } else {
+        trial$spillover_limit0 <- -1e-04
+        trial$spillover_limit1 <- 1e-04
+        sample$scale_par <- NA
+        controlY_quantiles <- quantile(sample$controlY, c(alpha/2, 0.5, 1 - alpha/2))
+        if(identical(cfunc, "Z")){
+            interventionY_quantiles <- controlY_quantiles
+        } else {
+            interventionY_quantiles <- quantile(sample$interventionY, c(alpha/2, 0.5, 1 - alpha/2))
+        }
+        FittedCurve <- data.frame(
+            X2.5. = ifelse(d < 0, controlY_quantiles[1], interventionY_quantiles[1]),
+            control_curve = ifelse(d < 0, controlY_quantiles[2], NA),
+            intervention_curve = ifelse(d >= 0, interventionY_quantiles[2], NA),
+            X97.5. = ifelse(d < 0, controlY_quantiles[3], interventionY_quantiles[3]))
+    }
+    # Measures calculated for each sample from the posterior
     if ("interventionY" %in% names(sample)) {
         sample$effect_size <- 1 - sample$interventionY/sample$controlY
     }
-    if (!(analysis$options$cfunc %in% c("X", "Z"))) {
-        if (is.null(sample$scale_par)) sample$scale_par <- scale_par
-        if (is.null(sample$scale_par)) sample$scale_par <- 1
-        spillover_list <- apply(sample, MARGIN = 1, FUN = get_spillover,
-                                    analysis = analysis)
-        spillover_df <- as.data.frame(do.call(rbind, lapply(spillover_list, as.data.frame)))
-        sample <- cbind(sample, spillover_df)
-    }
-    bounds <- (apply(
-        sample, 2, function(x) {quantile(x, c(alpha/2, 0.5, 1 - alpha/2),
-                                         alpha = alpha, na.rm = TRUE)}))
-    analysis <- add_estimates(analysis = analysis, bounds = bounds, CLnames = CLnames)
-
+    sample$total_effect <- ifelse(identical(cfunc, "Z"), NA, sample$controlY - sample$interventionY)
+    FittedCurve$d <- d
+    analysis$spillover$FittedCurve <- FittedCurve
+    analysis <- add_estimates(analysis = analysis, sample = trial, CLnames = CLnames, alpha = alpha, pt_src = 'spillover')
+    analysis <- add_estimates(analysis = analysis, sample = sample, CLnames = CLnames, alpha = alpha, pt_src = 'pt_ests')
 return(analysis)
 }
+
+computeFittedCurve <- function(x, trial, cfunc, link, d = d, distance, sample, alpha) {
+    i <- as.integer(x[['sample_no']])
+    scale_par <- sample[i, 'scale_par']
+    par0 <- c(sample[i, "par0_1"], sample[i, "par0_2"], sample[i, "scale_par"])
+    par1 <- c(sample[i, "par1_1"], sample[i, "par1_2"], sample[i, "scale_par"])
+    if ((distance %in% c("disc", "kern")) & identical(cfunc, "E")){
+        trial <- compute_distance(trial, distance = distance, scale_par = scale_par)$trial
+    }
+    point <- data.frame(distance = as.numeric(trial[x[['rowname']], distance]), arm = x[['arm']])
+    names(point) <- c(eval(distance),'arm')
+    fv <- ifelse((identical(x[['arm']], 'control')),
+            fitted_spillover(cfunc = cfunc, link = link, par = par0, trial = point, distance = distance),
+            fitted_spillover(cfunc = cfunc, link = link, par = par1, trial = point, distance = distance))
+    # Computation of the full curve
+    curve_df <- data.frame(distance = d)
+    names(curve_df) <- c(distance)
+    curve <-
+        fitted_spillover(cfunc = cfunc, link = link, par = par1, trial = curve_df, distance = distance)
+
+    if (min(d) < 0) {
+        control_curve <-
+            fitted_spillover(cfunc = cfunc, link = link, par = par0, trial = curve_df, distance = distance)
+        curve <- ifelse(d > 0, control_curve, curve)
+    }
+
+    # compute the spillover limits
+    cY <- sample$controlY[i]
+    iY <- sample$interventionY[i]
+
+    limit0 <- d[which(curve < (cY - alpha * (cY - min(curve[d <= 0]))))][1]
+    limit1 <- d[which(curve < (iY + alpha * (max(curve[d > 0]) - iY)))][1]
+
+    # concatenate the sampled value of the distance, the fitted value of the response, and the spillover limits,
+    # with the curve so that the return value is a single vector
+    curve <- c(point[1,1], fv, limit0, limit1, curve)
+return(curve)}
 
 # logit transformation
 logit <- function(p = p)
@@ -1688,7 +1460,7 @@ logit <- function(p = p)
 }
 
 # cloglog transformation
-cloglog = function(p) log(-log(1-p))
+cloglog <- function(p) log(-log(1-p))
 
 
 # link transformation
@@ -1713,26 +1485,6 @@ invlink <- function(link = link, x = x)
     return(value)
 }
 
-# Contributions to the linear predictor for different spillover functions
-
-StraightLine <- function(par, trial)
-{
-    par[2] <- par[3] <- -9
-    lp <- par[1]
-    return(lp)
-}
-
-# step function for the case with no spillover
-
-StepFunction <- function(par, trial, distance)
-{
-    par[3] <- -9
-    lp <- ifelse(trial[[distance]] < 0, par[1], par[1] + par[2])
-    return(lp)
-}
-
-
-
 # piecewise linear model
 PiecewiseLinearFunction <- function(par, trial, distance)
 {
@@ -1741,7 +1493,7 @@ PiecewiseLinearFunction <- function(par, trial, distance)
 
     # if scale_par is very large, the curve should be close to a straight line
     if (scale_par > 20){
-        lp <- par[1] + 0.5 * par[2]
+        lp <- rep(par[1] + 0.5 * par[2], times = nrow(trial))
 
     } else {
         lp <- ifelse(
@@ -1760,303 +1512,106 @@ piecewise <- function(x) {
     value <- ifelse(x > 0.5, 1, value)
 return(value)}
 
-# rescaled linear model
-RescaledLinearFunction <- function(par, trial, distance)
-{
-    # par[3] is not used
-    scale_par <- par[3]
-
-    lp <- par[1] + rescale(trial[[distance]]) * par[2]
-
-    return(lp)
-}
-
-
 rescale <- function(x) {
     value <- (x - min(x))/(max(x) - min(x))
 return(value)}
 
-# sigmoid (logit) function
-InverseLogisticFunction <- function(par, trial, distance)
-{
-    lp <- par[1] + par[2] * invlink(link = "logit", x = trial[[distance]]/par[3])
-    return(lp)
-}
-
-# inverse probit function
-InverseProbitFunction <- function(par, trial, distance)
-{
-    lp <- par[1] + par[2] * stats::pnorm(trial[[distance]]/par[3])
-    return(lp)
-}
-
-# escape function
-EscapeFunction <- function(par, trial, distance)
-{
-    lp <- par[1] + par[2] * (1 - exp(-(trial[[distance]]/par[3])))
-    return(lp)
-}
-
-get_FUN <- function(cfunc, variant){
-    # TODO: remove the duplication and simplify here
-    # Specify the function used for calculating the linear predictor
-    if (identical(variant, 1)) {
-        LPfunction <- c(
-            "StraightLine", "StepFunction", "PiecewiseLinearFunction",
-            "InverseLogisticFunction", "InverseProbitFunction", "RescaledLinearFunction",
-            "EscapeFunction")[which(cfunc == c("Z", "X", "S", "L", "P", "R", "E"))]
-        FUN <- eval(parse(text = LPfunction))
-    } else {
-        # trap a warning with use of "E"
-        if (identical(cfunc, "E")) cfunc = "ES"
-        FUN <- switch(
-            cfunc, L = "invlink(link='logit', x)",
-                 P = "stats::pnorm(x)",
-                 S = "piecewise(x)",
-                 X = "rescale(x)",
-                 Z = "rescale(x)",
-                 R = "rescale(x)",
-                 ES = "escape(x)")
+fitted_spillover <- function(cfunc, link, par, trial, distance) {
+    if(identical(cfunc, 'E')) cfunc <- 'H' #to deal with partial matching error
+    lp <- switch(cfunc,
+       Z = par[1],
+       X = ifelse(trial[[distance]] < 0, par[1], par[1] + par[2]),
+       S = PiecewiseLinearFunction(par=par, trial=trial, distance=distance),
+       L = par[1] + par[2] * invlink(link = "logit", x = trial[[distance]]/par[3]),
+       P = par[1] + par[2] * stats::pnorm(trial[[distance]]/par[3]),
+       D = NA,
+       R = par[1] + rescale(trial[[distance]]) * par[2],
+       H = par[1] + par[2] * (1 - exp(-(trial[[distance]]/par[3]))))
+    fv <- invlink(link, lp)
+    if(identical(cfunc,'D')) {
+        u0 <- invlink(link, par[1])
+        u1 <- invlink(link, x = par[1] + par[2])
+        fv <- u0 + (u1 - u0) * stats::pnorm(trial[[distance]]/par[3])
     }
+return(fv)}
+
+get_FUN <- function(cfunc){
+    # trap a warning with use of "E"
+    if (identical(cfunc, "E")) cfunc = "ES"
+    FUN <- switch(
+        cfunc, L = "invlink(link='logit', x)",
+             P = "stats::pnorm(x)",
+             D = "stats::pnorm(x)",
+             S = "piecewise(x)",
+             X = "rescale(x)",
+             Z = "rescale(x)",
+             R = "rescale(x)",
+             ES = "escape(x)")
     return(FUN)
 }
 
 get_spillover <- function(x, analysis){
-        # define the limits of the curve both for control and intervention arms
-    fittedCurve <- get_curve(x = x, analysis = analysis)
-    spillover <- get_spilloverStats(fittedCurve=fittedCurve, trial=analysis$trial,
-                                            distance = analysis$options$distance)
-return(spillover)
-}
-
-get_curve <- function(x, analysis) {
     trial <- analysis$trial
     link <- analysis$options$link
     distance <- analysis$options$distance
     cfunc <- analysis$options$cfunc
-    if ((distance %in% c("disc", "kern")) & identical(cfunc, "E")) cfunc <- "R"
-    total_effect <- ipsilateral_spillover <- contralateral_spillover <- NULL
+    if ((distance %in% c("disc", "kern")) & identical(cfunc, "E")) {
+        trial <- compute_distance(trial, distance = distance, scale_par = x[['scale_par']])
+        cfunc <- "R"
+    }
     limits <- matrix(x[["controlY"]], nrow = 2, ncol = 2)
-    if(!is.null(x[["interventionY"]])) {
-        limits[ ,2] <-  rep(x[["interventionY"]], times = 2)
-    } else {
-        limits[ , 2] <- rep(x[["controlY"]], times = 2)
-    }
-    if (!is.na(x[["personal_protection"]])) {
-        limits[1, 2] <- invlink(link, x[["int"]] + x[["pvar"]])
-        limits[2, 1] <- invlink(link, x[["int"]] + x[["arm"]])
-    }
-    if (identical(cfunc, 'X')) {
-        limits[1, 2] <- limits[1, 1]
-        limits[2, 1] <- limits[2, 2]
-    }
+    # The limits of the spillover curves are:
+
+    # the value for uncontaminated controls
+    limits[1, 1] <- x[["controlY"]]
+
+    # the value for maximally contaminated controls
+    limits[1, 2] <- ifelse(cfunc %in% c('X','Z'), limits[1, 1],
+                           invlink(link, x[["int"]] + x[["effect"]]))
+
+    # the counter-factual for intervention with no effect
+    limits[2, 1] <- ifelse (is.na(x[["personal_protection"]]),
+                           x[["controlY"]],
+                           invlink(link, x[["int"]] + x[["arm"]]))
+
+    # the value for maximally intervention effect
+    limits[2, 2] <- ifelse (is.na(x[["personal_protection"]]),
+                            x[["interventionY"]],
+                            invlink(link, x[["int"]] + x[["effect"]] + x[["arm"]]))
+
     scale_par <- ifelse("scale_par" %in% names(x), x[["scale_par"]], analysis$options$scale_par)
     # Trap cases with extreme effect: TODO: a different criterion may be needed for continuous data
     pars <- link_tr(link,limits)
     if (sum((pars[, 1] - pars[, 2])^2) > 10000) {
         limits <- invlink(link, matrix(c(20,20, -20, -20), nrow = 2, ncol = 2))
     }
-    if (is.null(trial[[distance]]))
-        trial <- compute_distance(trial, distance = distance, scale_par = scale_par)$trial
-    range_d <- max(trial[[distance]]) - min(trial[[distance]])
-    d <- min(trial[[distance]]) + range_d * (seq(1:1001) - 1)/1000
-    if (identical(limits[, 1], limits[ , 2])) {
-        control_curve <- rep(limits[1, 1], 1001)
-        intervention_curve <- rep(limits[2, 1], 1001)
-    } else {
-        par0 <- c(link_tr(link, limits[1, 1]),
-                  link_tr(link, limits[1, 2]) - link_tr(link, limits[1, 1]),
-                  scale_par)
-        par1 <- c(
-            link_tr(link, limits[2, 1]),
-            link_tr(link, limits[2, 2]) - link_tr(link, limits[2, 1]),
-            scale_par
-        )
-        # trap extreme cases with undefined, flat or very steep curves
-        if (!identical(cfunc, "R")) {
-            if (is.null(scale_par)) {
-                cfunc <- "X"
-            } else if (is.na(scale_par) |
-                scale_par < 0.01 |
-                scale_par > 100  |
-                (sum((pars[, 1] - pars[, 2])^2) > 10000)) {
-                cfunc <- "X"
-            }
+
+    par0 <- c(link_tr(link, limits[1, 1]),
+              link_tr(link, limits[1, 2]) - link_tr(link, limits[1, 1]),
+              scale_par)
+    par1 <- c(
+        link_tr(link, limits[2, 1]),
+        link_tr(link, limits[2, 2]) - link_tr(link, limits[2, 1]),
+        scale_par
+    )
+
+    # trap extreme cases with undefined, flat or very steep curves
+    if (!identical(cfunc, "R")) {
+        if (is.null(scale_par)) {
+            cfunc <- "X"
+        } else if (is.na(scale_par) |
+                   scale_par < 0.01 |
+                   scale_par > 100  |
+                   (sum((pars[, 1] - pars[, 2])^2) > 10000)) {
+            cfunc <- "X"
         }
-        FUN1 <- get_FUN(cfunc, variant = 1)
-        fitted_values <- ifelse(trial$arm == 'intervention',
-                invlink(link, FUN1(trial = trial, par = par1, distance = distance)),
-                invlink(link, FUN1(trial = trial, par = par0, distance = distance)))
-        total_effect <- x[["controlY"]] - x[["interventionY"]]
-        ipsilateral_spillover <- mean(fitted_values[trial$arm == 'intervention']) - x[["interventionY"]]
-        contralateral_spillover <- x[["controlY"]] - mean(fitted_values[trial$arm == 'control'])
-        intervention_curve <- invlink(link, FUN1(trial = data.frame(d = d), par = par1,
-                                                        distance = "d"))
-        control_curve <- invlink(link, FUN1(trial = data.frame(d = d),
-                                            par = par0, distance = "d"))
     }
-    if(min(d) < 0) {
-        control_curve[d > 0] <- NA
-        intervention_curve[d < 0] <- NA
-    }
-    fittedCurve <- list(d = d, control_curve = control_curve, intervention_curve = intervention_curve,
-                        limits = limits, total_effect = total_effect,
-                        ipsilateral_spillover = ipsilateral_spillover,
-                        contralateral_spillover = contralateral_spillover)
-    return(fittedCurve)
-}
-
-# This is called once for each row in the sample data frame (for obtaining interval estimates)
-get_spilloverStats <- function(fittedCurve, trial, distance) {
-    # Compute the spillover interval
-    # The absolute values of the limits are used so that a positive range is
-    # obtained even with negative effect_size
-    limits <- fittedCurve$limits
-    d <- fittedCurve$d
-    curve <- ifelse(d > 0, fittedCurve$intervention_curve, fittedCurve$control_curve)
-    thetaL <- thetaU <- NA
-    if (abs(limits[1, 1] - curve[1000]) >
-        0.025 * abs(limits[1, 1] - limits[1, 2]))
-    {
-        thetaL <- d[min(
-            which(
-                abs(limits[1, 1] - curve) >
-                    0.025 * abs(limits[1, 1] - limits[1, 2])
-            )
-        )]
-    }
-    if (abs(limits[2, 2] - curve[1000]) <
-        0.025 * abs(limits[2, 1] - limits[2, 2]))
-    {
-        thetaU <- ifelse(abs(limits[2, 2] - curve[1001] > 0.025 * abs(limits[2, 1] - limits[2, 2])),
-            d[max(which(abs(limits[2, 2] - curve) >
-             0.025 * abs(limits[2, 1] - limits[2, 2]))
-        )], d[1001])
-    }
-    if (is.na(thetaU))
-        thetaU <- max(trial[[distance]])
-    if (is.na(thetaL))
-        thetaL <- min(trial[[distance]])
-
-    # spillover interval
-    spillover_limits <- c(thetaL, thetaU)
-    if (thetaL > thetaU)
-        spillover_limits <- c(thetaU, thetaL)
-
-    contaminate_pop_pr <- sum(trial[[distance]] > spillover_limits[1] &
-                                  trial[[distance]] < spillover_limits[2])/nrow(trial)
-    spillover_interval <- thetaU - thetaL
-    if (identical(thetaU, thetaL)) {
-        spillover_interval <- 0
-        # To remove warnings from plotting ensure that spillover interval is non-zero
-        spillover_limits <- c(-1e-04, 1e-04)
-    }
-
     spillover <- list(
-        spillover_interval = spillover_interval,
-        spillover_limit0 = spillover_limits[1],
-        spillover_limit1 = spillover_limits[2],
-        contaminate_pop_pr = contaminate_pop_pr,
-        total_effect = fittedCurve$total_effect,
-        ipsilateral_spillover = fittedCurve$ipsilateral_spillover,
-        contralateral_spillover = fittedCurve$contralateral_spillover)
+        par0_1 = par0[1],
+        par0_2 = par0[2],
+        par1_1 = par1[1],
+        par1_2 = par1[2])
 return(spillover)}
-
-
-tidySpillover <- function(spillover, analysis, fittedCurve){
-#    if (identical(analysis$options$distance,"nearestDiscord")) {
-        spillover$spillover_limits <-
-            with(spillover, c(spillover_limit0,spillover_limit1))
-        if (analysis$options$cfunc %in% c("Z","X")) {
-            spillover$spillover_interval <- NULL
-            spillover$contaminate_pop_pr <- NULL
-            spillover$spillover_limits <- c(-1.0E-4,1.0E-4)
-        } else {
-            if (is.na(analysis$pt_ests$scale_par))
-                analysis$pt_ests$scale_par <- spillover$scale_par
-            if (is.na(analysis$pt_ests$spillover_interval))
-                analysis$pt_ests$spillover_interval <-
-                    spillover$spillover_interval
-        }
-        spillover$spillover_limit0 <- spillover$spillover_limit1 <- NULL
-#    }
-    spillover$FittedCurve <- data.frame(d = fittedCurve$d,
-                                        intervention_curve = fittedCurve$intervention_curve,
-                                        control_curve = fittedCurve$control_curve)
-    analysis$spillover <- spillover
-return(analysis)}
-
-#' Extract model fitted values
-#'
-#' \code{fitted.CRTanalysis} method for extracting model fitted values
-#' @param object CRTanalysis object
-#' @param ... other arguments
-#' @export
-#' @return the fitted values returned by the statistical model run within the \code{CRTanalysis} function
-#' @examples
-#' {example <- readdata('exampleCRT.txt')
-#' exampleGEE <- CRTanalysis(example, method = "GEE")
-#' fitted_values <- fitted(exampleGEE)
-#' }
-fitted.CRTanalysis <- function(object, ...){
-    value = fitted(object = object$model_object, ...)
-    return(value)
-}
-
-#' Extract model coefficients
-#'
-#' \code{coef.CRTanalysis} method for extracting model fitted values
-#' @param object CRTanalysis object
-#' @param ... other arguments
-#' @export
-#' @return the model coefficients returned by the statistical model run within the \code{CRTanalysis} function
-#' @examples
-#' {example <- readdata('exampleCRT.txt')
-#' exampleGEE <- CRTanalysis(example, method = "GEE")
-#' coef(exampleGEE)
-#' }
-coef.CRTanalysis <- function(object, ...){
-    value = coef(object = object$model_object, ...)
-    return(value)
-}
-
-#' Extract model residuals
-#'
-#' \code{residuals.CRTanalysis} method for extracting model residuals
-#' @param object CRTanalysis object
-#' @param ... other arguments
-#' @export
-#' @return the residuals from the statistical model run within the \code{CRTanalysis} function
-#' @examples
-#' {example <- readdata('exampleCRT.txt')
-#' exampleGEE <- CRTanalysis(example, method = "GEE")
-#' residuals <- residuals(exampleGEE)
-#' }
-residuals.CRTanalysis <- function(object, ...){
-    if ("gee" %in% class(object$model_object)) {
-        value <- object$model_object$residuals
-    } else {
-        value <- residuals(object = object$model_object, ...)
-    }
-    return(value)
-}
-
-#' Model predictions
-#'
-#' \code{predict.CRTanalysis} method for extracting model predictions
-#' @param object CRTanalysis object
-#' @param ... other arguments
-#' @export
-#' @return the model predictions returned by the statistical model run within the \code{CRTanalysis} function
-#' @examples
-#' {example <- readdata('exampleCRT.txt')
-#' exampleGEE <- CRTanalysis(example, method = "GEE")
-#' predictions <- predict(exampleGEE)
-#' }#'
-predict.CRTanalysis <- function(object, ...){
-    value = predict(object = object$model_object, ...)
-    return(value)
-}
 
 getDistanceText <- function(distance = "nearestDiscord", scale_par = NULL) {
     value <- switch(distance,
@@ -2069,14 +1624,14 @@ getDistanceText <- function(distance = "nearestDiscord", scale_par = NULL) {
     return(value)
 }
 
-compute_pvar <- function(trial, distance, scale_par, FUN) {
+compute_effect <- function(trial, distance, scale_par, FUN) {
     if (distance %in% c('disc','kern')) {
         trial <- compute_distance(trial,
-                                  distance = distance, scale_par = scale_par)$trial
+                    distance = distance, scale_par = scale_par)$trial
         x <- trial[[distance]]
     } else {
         x <- trial[[distance]]/scale_par
     }
-    pvar <- eval(parse(text = FUN))
-    return(pvar)
+    effect <- eval(parse(text = FUN))
+    return(effect)
 }

@@ -21,8 +21,11 @@ CRTanalysis(
   personalProtection = FALSE,
   clusterEffects = TRUE,
   spatialEffects = FALSE,
+  pixel = 0.1,
+  control = NULL,
   requireMesh = FALSE,
-  inla_mesh = NULL
+  inla_mesh = NULL,
+  verbose = FALSE
 )
 }
 \arguments{
@@ -36,8 +39,7 @@ assignments (factor \code{cluster}), and arm assignments (factor \code{arm}) and
 \code{"GEE"} \tab Generalised Estimating Equations \cr
 \code{"LME4"} \tab Generalized Linear Mixed-Effects Models \cr
 \code{"INLA"}\tab Integrated Nested Laplace Approximation (INLA) \cr
-\code{"MCMC"}\tab Markov chain Monte Carlo using \code{"JAGS"} \cr
-\code{"WCA"}\tab Within cluster analysis \cr
+\code{"MCMC"}\tab Markov chain Monte Carlo using \code{"stan"} \cr
 }}
 
 \item{distance}{Measure of distance or surround with options: \cr
@@ -57,6 +59,7 @@ assignments (factor \code{cluster}), and arm assignments (factor \code{arm}) and
 \code{"X"} \tab\tab spillover not modelled\tab the only valid value of \code{cfunc} for methods \code{"EMP"}, \code{"T"} and \code{"GEE"}\cr
 \code{"L"} \tab\tab inverse logistic (sigmoid)\tab the default for \code{"INLA"} and \code{"MCMC"} methods\cr
 \code{"P"} \tab\tab inverse probit (error function)\tab available with \code{"INLA"} and \code{"MCMC"} methods\cr
+\code{"D"} \tab\tab diffusion model\tab only available with the \code{"MCMC"} method\cr
 \code{"S"} \tab\tab piecewise linear\tab only available with the \code{"MCMC"} method\cr
 \code{"E"} \tab\tab estimation of scale factor\tab only available with \code{distance = "disc"} or \code{distance = "kern"}\cr
 \code{"R"} \tab\tab rescaled linear\tab \cr
@@ -89,14 +92,23 @@ assignments (factor \code{cluster}), and arm assignments (factor \code{arm}) and
 \item{clusterEffects}{logical: indicator of whether the model includes cluster random effects}
 
 \item{spatialEffects}{logical: indicator of whether the model includes spatial random effects
-(available only for \code{method = "INLA"})}
+(available only for \code{method = "INLA"} or for \code{method = "MCMC"})}
+
+\item{pixel}{numeric: size of pixel in km for spatial model (used for \code{method = "MCMC"})}
+
+\item{control}{list: control options to be passed to the statistical fitting function
+(available only for \code{method = "MCMC"})}
 
 \item{requireMesh}{logical: indicator of whether spatial predictions are required
 (available only for \code{method = "INLA"})}
 
 \item{inla_mesh}{string: name of pre-existing INLA input object created by \code{compute_mesh()}}
+
+\item{verbose}{logical: indicator of whether progress indicators, stan code, and the result summary should be returned}
 }
 \value{
+list of class \code{CRTanalysis} containing the following results of the analysis:
+
 list of class \code{CRTanalysis} containing the following results of the analysis:
 \itemize{
 \item \code{description} : description of the dataset
@@ -114,7 +126,7 @@ list of class \code{CRTanalysis} containing the following results of the analysi
 \code{CRTanalysis} is a wrapper for the statistical analysis packages:
 \href{https://CRAN.R-project.org/package=gee}{gee},
 \href{https://www.r-inla.org/}{INLA},
-\href{https://CRAN.R-project.org/package=jagsUI}{jagsUI},
+\href{https://CRAN.R-project.org/package=rstan}{rstan},
 and the \href{https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/t.test}{t.test}
 function of package \code{stats}.\cr\cr
 The wrapper does not provide an interface to the full functionality of these packages.
@@ -125,11 +137,13 @@ The \code{model_object} in the output list is the usual output from the statisti
 and can be also be inspected with \code{summary()}, or analysed using \code{stats::fitted()}
 for purposes of evaluation of model fit etc..\cr\cr
 For models with a complementary log-log link function specified with \code{link = "cloglog"}.
-the numerator must be coded as 0 or 1. Technically the binomial denominator is then 1.
-The value of \code{denominator} is used as a rate multiplier.\cr\cr
-With the \code{"INLA"} and \code{"MCMC"} methods 'iid' random effects are used to model extra-Poisson variation.\cr\cr
+the numerator must be coded as 0 or 1. Technically the binomial denominator is then 1 and the
+value of \code{denominator} is used as a rate multiplier.\cr\cr
+With the \code{"INLA"} method 'iid' random effects are used to model extra-Poisson variation.\cr\cr
 Interval estimates for the coefficient of variation of the cluster level outcome are calculated using the method of
-\href{https://www.jstor.org/stable/2685039}{Vangel (1996)}.
+\href{https://www.jstor.org/stable/2685039}{Vangel (1996)}.\cr\cr
+If a \code{control} list is provided then this is passed to the 'stan' call. In addition to the values allowed by
+'rstan::stan()', the number of iterations can be specified via value of 'iter'.
 }
 \examples{
 \donttest{

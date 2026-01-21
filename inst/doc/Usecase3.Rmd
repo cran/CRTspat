@@ -32,8 +32,8 @@ summary(example)
 ## Summary of coordinates
 ## ----------------------
 ##         Min.   : 1st Qu.: Median : Mean   : 3rd Qu.: Max.   :
-##       x -3.20    -1.40    -0.30    -0.07     1.26     5.16   
-##       y -5.08    -2.84     0.19     0.05     2.49     6.16   
+##       x -3.20    -1.39    -0.30    -0.07     1.25     5.16   
+##       y -5.07    -2.84     0.19     0.05     2.49     6.16   
 ## 
 ## Total area (within  0.2 km of a location) :  27.6 sq.km
 ## Total area (convex hull) :  48.2 sq.km

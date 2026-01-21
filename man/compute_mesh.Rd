@@ -52,10 +52,10 @@ A warning may be generated if the \code{Matrix} library is not loaded.
 }
 \examples{
 {
+\donttest{
 # low resolution mesh for test dataset
 library(Matrix)
-library(sp)
 example <- readdata('exampleCRT.txt')
 exampleMesh=compute_mesh(example, pixel = 0.5)
-}
+}}
 }

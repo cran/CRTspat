@@ -48,8 +48,8 @@ summary(exampleCRT)
 ## Summary of coordinates
 ## ----------------------
 ##         Min.   : 1st Qu.: Median : Mean   : 3rd Qu.: Max.   :
-##       x -3.20    -1.31    -0.24     0.00     1.35     5.16   
-##       y -5.08    -2.84    -0.17     0.00     2.49     6.16   
+##       x -3.20    -1.31    -0.23     0.00     1.35     5.16   
+##       y -5.07    -2.84    -0.16     0.00     2.49     6.16   
 ## 
 ## Total area (within  0.2 km of a location) :  27.6 sq.km
 ## Total area (convex hull) :  48.2 sq.km
@@ -79,8 +79,8 @@ summary(example)
 ## Summary of coordinates
 ## ----------------------
 ##         Min.   : 1st Qu.: Median : Mean   : 3rd Qu.: Max.   :
-##       x -3.20    -1.40    -0.30    -0.07     1.26     5.16   
-##       y -5.08    -2.84     0.19     0.05     2.49     6.16   
+##       x -3.20    -1.39    -0.30    -0.07     1.25     5.16   
+##       y -5.07    -2.84     0.19     0.05     2.49     6.16   
 ## 
 ## Total area (within  0.2 km of a location) :  27.6 sq.km
 ## Total area (convex hull) :  48.2 sq.km
@@ -121,8 +121,8 @@ summary(example_clustered)
 ## Summary of coordinates
 ## ----------------------
 ##         Min.   : 1st Qu.: Median : Mean   : 3rd Qu.: Max.   :
-##       x -3.20    -1.40    -0.30    -0.07     1.26     5.16   
-##       y -5.08    -2.84     0.19     0.05     2.49     6.16   
+##       x -3.20    -1.39    -0.30    -0.07     1.25     5.16   
+##       y -5.07    -2.84     0.19     0.05     2.49     6.16   
 ## 
 ## Total area (within  0.2 km of a location) :  27.6 sq.km
 ## Total area (convex hull) :  48.2 sq.km
@@ -185,13 +185,6 @@ then generate a randomisation based on matched pairs.
 ``` r
 example_randomized <- randomizeCRT(example_clustered, matchedPair = TRUE,
   baselineNumerator = "RDT_test_result", baselineDenominator = "base_denom")
-```
-
-```
-## *** computed distance to nearest measurements in discordant arm ***
-```
-
-``` r
 summary(example_randomized)
 ```
 
@@ -201,9 +194,9 @@ summary(example_randomized)
 ## Summary of coordinates
 ## ----------------------
 ##                Min.   : 1st Qu.: Median : Mean   : 3rd Qu.: Max.   :
-##       x        -3.20    -1.40    -0.30    -0.07     1.26     5.16   
-##       y        -5.08    -2.84     0.19     0.05     2.49     6.16   
-## nearestDiscord -1.64    -0.39     0.01     0.03     0.40     2.57   
+##       x        -3.20    -1.39    -0.30    -0.07     1.25     5.16   
+##       y        -5.07    -2.84     0.19     0.05     2.49     6.16   
+## nearestDiscord -2.56    -0.71    -0.02    -0.09     0.65     3.47   
 ## 
 ## Total area (within  0.2 km of a location) :  27.6 sq.km
 ## Total area (convex hull) :  48.2 sq.km

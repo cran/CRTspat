@@ -13,13 +13,16 @@ The [`CRTanalysis()`](../reference/CRTanalysis.html) function is a wrapper for d
 
 ## Statistical Methods
 
+The [`CRTanalysis()`](../reference/CRTanalysis.html) function analyses trials with outcomes that may be either proportions, rates, or continuous variables. The type of outcome and
+and the corresponding link function are specified with the parameter `link`.
 The options that can be specified using the `method` parameter in the function call are:
 
 + `method = "T"` summarises the outcome at the level of the cluster, and uses 2-sample t-tests to carry out statistical significance tests of the effect, and to compute confidence intervals for the effect size. The [t.test](https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/t.test) function in the `stats` package is used.
 +	`method = "GEE"` uses Generalised Estimating Equations to estimate the efficacy in a model with iid random effects for the clusters. An estimate of the intracluster correlation (ICC) is also provided. This uses calls to the [gee](https://CRAN.R-project.org/package=gee) package.
 +	`method = "LME4"` fits linear (for continuous data) or generalized linear (for counts and proportions) mixed models with iid random effects for clusters in [lme4](https://CRAN.R-project.org/package=lme4).
-+ `method = "MCMC"` uses Markov chain Monte Carlo simulation in package [jagsUI](https://CRAN.R-project.org/package=jagsUI), which calls r-JAGS.
-+ `method = "INLA"` uses approximate Bayesian inference via the [R-INLA package](https://www.r-inla.org/). This provides functionality for geostatistical analysis, which can be used for geographical mapping of model outputs (as illustrated in . INLA spatial analysis requires a prediction mesh. This can be generated using [`CRTspat::new_mesh()`](../reference/new_mesh().html). This can be computationally expensive, so it is recommended to compute the mesh just once for each dataset.
++ `method = "MCMC"` uses Markov chain Monte Carlo simulation in package [rstan](https://CRAN.R-project.org/package=rstan).
++ `method = "INLA"` uses approximate Bayesian inference via the [R-INLA package](https://www.r-inla.org/). This provides functionality for geostatistical analysis, which can be used for geographical mapping of model outputs (as illustrated in . INLA spatial analysis requires a prediction mesh.
+This can be generated using [`CRTspat::compute_mesh()`](../reference/compute_mesh.html). This can be computationally expensive, so it is recommended to compute the mesh just once for each dataset.
 
 All these analysis methods can be used to carry out a simple comparision of outcomes between trial arms. Each offers different additional functionality, and has its own limitations (see Table 5.1). Some of these limitations are specific to the options offered within `CRTanalysis()`, which does not embrace the full range of options of the packages that are 'wrapped'. These are specified using the `method` argument of the function.
 
@@ -31,7 +34,7 @@ Table 5.1. Available statistical methods
 | `GEE` | [gee](https://CRAN.R-project.org/package=gee) | Interval estimates for efficacy | No analysis of spillover or degree of clustering |
 | `LME4`| [lme4](https://CRAN.R-project.org/package=lme4) | Analysis of spillover | No geostatistical analysis |
 | `INLA` | [INLA](https://www.r-inla.org/) | Analysis of spillover, geostatistical analysis and spatially structured outputs | Computationally intensive |
-| `MCMC` | [jagsUI](https://CRAN.R-project.org/package=jagsUI) | Interval estimates for spillover parameters | Identifiability issues and slow convergence are possible |
+| `MCMC` | [rstan](https://CRAN.R-project.org/package=rstan) | Interval estimates for spillover parameters | Identifiability issues and slow convergence are possible |
 
 For the analysis of proportions, the outcome in the control arm is estimated as: $\hat{p}_{C} = \frac{1}{1 + exp(-\beta_1)}$, in the intervention arm as $\hat{p}_{I} = \frac{1}{1 + exp(-\beta_1-\beta_2)}$, and the efficacy is estimated as $\tilde{E}_{s} = 1- \frac{\tilde{p}_{I}}{\tilde{p}_{C}}$ where $\beta_1$ is the intercept term and $\beta_2$ the incremental effect associated with the intervention.
 
@@ -54,10 +57,10 @@ summary(analysisT)
 ## Link function:  logit 
 ## Model formula:  arm + (1 | cluster) 
 ## No modelling of spillover 
-## Estimates:       Control:  0.364  (95% CL:  0.286 0.451 )
-##             Intervention:  0.21  (95% CL:  0.147 0.292 )
-##                 Efficacy:  0.423  (95% CL:  0.208 0.727 )
-## Coefficient of variation:  48.4 %  (95% CL:  36 75.9 )
+## Estimates:       Control: 0.364 (95% CL: 0.286 0.451)
+##             Intervention: 0.21 (95% CL: 0.147 0.292)
+##                 Efficacy: 0.423 (95% CL: 0.208 0.727)
+## Coefficient of variation: 48.425 (95% CL: 35.969 75.865)
 ##  
 ## P-value (2-sided):  0.006879064
 ```
@@ -82,8 +85,10 @@ analysisT$model_object
 
 ## Assessing model fit
 
-The `model = "LME4"` option outputs the deviance of the model and the Akaike information criterion (AIC), which can be
-used to select the best fitting model. The deviance information criterion (DIC) and Bayesian information criterion (BIC) perform the same role for the Bayesian methods (`"INLA"`, and `"MCMC"`).  The comparison of results with `cfunc = "X"` and `cfunc = "Z"` is used to assess whether the intervention effect is likely to be due to chance. With `method = "T"`, `cfunc = "X"` provides a significance test of the intervention effect directly. The models with spillover (see below) can be compared by that with `cfunc = "X"` to evaluate whether spillover has led to an important bias.
+The `method = "LME4"` option outputs the deviance of the model and the Akaike information criterion (AIC), which can be
+used to select the best fitting model. The deviance information criterion (DIC) and Bayesian information criterion (BIC) perform the same role for `method = "INLA"`.
+For `method = "MCMC"` goodness-of-fit is assessed using the LOO criterion (package [loo](https://CRAN.R-project.org/package=loo)).
+The comparison of results with `cfunc = "X"` and `cfunc = "Z"` is used to assess whether the intervention effect is likely to be due to chance. With `method = "T"`, `cfunc = "X"` provides a significance test of the intervention effect directly. The models with spillover (see below) can be compared by that with `cfunc = "X"` to evaluate whether spillover has led to an important bias.
 
 
 ## Spillover
@@ -114,11 +119,17 @@ Table 5.2. Available spillover functions
     P\left( d \right) = \ 1\  for\ d\  > \ S/2\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \  \ \ \\
     \end{matrix}\ $ | `LME4` `INLA` `MCMC` |
 | `R`| rescaled linear | $P\left( d \right) =\frac{d\ -\ min(d)}{max(d)\ -\ min(d)}$ | `LME4` `INLA` `MCMC` |
+| `D`| diffusion | $P\left( d \right) = 1\ +\ erf\left(\frac{d}{S\sqrt2}\right)$ | `MCMC` |
 
-`cfunc` options `P`, `L` and `S` lead to non-linear models in which the spillover
-scale parameter (`S`) must be estimated. This is done by selecting `scale_par` using a one-dimensional optimisation of the goodness of fit of the model in `stats::optimize()`.
+With `cfunc` options other than `D` the spillover function is applied on the scale of the linear predictor. With option
+`D` the spillover function is on the same scale as the outcome (which matches the linear predictor only if `link = "identity"`). Option
+`D` corresponds to the [diffusion model of spillover](https://doi.org/10.21203/rs.3.rs-5423058/v1).
 
-The different values for `cfunc` lead to the fitted curves shown in Figure 5.1. The light blue shaded part of the
+`cfunc` options `P`, `L`, `S` and `D` lead to non-linear models in which the spillover scale parameter (`S`) must be estimated.
+With the `LME4` and `INLA` options this is done by optimising the `scale_par` by running the generalised linear model iteratively within a one-dimensional optimisation of the goodness of fit of the model in `stats::optimize()`.
+With the `MCMC` option the MCMC algorithm fits the scale parameter as part of the overall non-linear model fit.
+
+Different values for `cfunc` lead to the fitted curves shown in Figure 5.1. The light blue shaded part of the
 plot corresponds to the spillover interval in those cases where this is estimated.
 
 
@@ -134,10 +145,10 @@ summary(analysisLME4_Z)
 ## Link function:  logit 
 ## Model formula:  (1 | cluster) 
 ## No comparison of arms 
-## Estimates:       Control:  0.285  (95% CL:  NA )
-## Coefficient of variation:  48.4 %  (95% CL:  36 75.9 )
-## deviance:  1387.609 
-## AIC     :  1391.609
+## Estimates:       Control: 0.285 (95% CL: 0.231 0.346)
+## Coefficient of variation: 48.425 (95% CL: 35.969 75.865)
+## deviance                :  NA 
+## AIC                     :  1391.609
 ```
 
 ``` r
@@ -152,12 +163,12 @@ summary(analysisLME4_X)
 ## Link function:  logit 
 ## Model formula:  arm + (1 | cluster) 
 ## No modelling of spillover 
-## Estimates:       Control:  0.366  (95% CL:  0.291 0.448 )
-##             Intervention:  0.216  (95% CL:  0.162 0.282 )
-##                 Efficacy:  0.41  (95% CL:  0.164 0.583 )
-## Coefficient of variation:  48.4 %  (95% CL:  36 75.9 )
-## deviance:  1379.898 
-## AIC     :  1385.898
+## Estimates:       Control: 0.367 (95% CL: 0.291 0.448)
+##             Intervention: 0.216 (95% CL: 0.16 0.281)
+##                 Efficacy: 0.412 (95% CL: 0.171 0.587)
+## Coefficient of variation: 48.425 (95% CL: 35.969 75.865)
+## deviance                :  NA 
+## AIC                     :  1385.898
 ```
 
 ``` r
@@ -171,20 +182,20 @@ summary(analysisLME4_P)
 ## Analysis method:  LME4 
 ## Link function:  logit 
 ## Measure of distance or surround: Signed distance to other arm (km)
-## Estimated scale parameter: 0.45
-## Model formula:  pvar + (1 | cluster) 
+##  with estimation of scale parameter.  
+## Model formula:  effect + (1 | cluster) 
 ## Error function model for spillover
-## Estimates:       Control:  0.417  (95% CL:  0.33 0.508 )
-##             Intervention:  0.186  (95% CL:  0.136 0.251 )
-##                 Efficacy:  0.552  (95% CL:  0.323 0.702 )
-## Spillover interval(km):      4.22  (95% CL:  4.2 4.23 )
-## % locations contaminated: 91.6  (95% CL:  90.6 92 %)
-## Total effect            : 0.229  (95% CL:  0.113 0.344 )
-## Ipsilateral Spillover   : 0.0233  (95% CL:  0.0127 0.0322 )
-## Contralateral Spillover : 0.0415  (95% CL:  0.0191 0.0646 )
-## Coefficient of variation:  48.4 %  (95% CL:  36 75.9 )
-## deviance:  1374.215 
-## AIC     :  1382.215 including penalty for the spillover scale parameter
+## Estimates:       Control: 0.418 (95% CL: 0.331 0.512)
+##             Intervention: 0.186 (95% CL: 0.135 0.249)
+##                 Efficacy: 0.554 (95% CL: 0.331 0.705)
+##          Scale parameter: 0.45 (95% CL: 0.45 0.45)
+##   Spillover interval(km): 1.749 (95% CL: 1.728 1.762)
+## Pr in spillover interval: 0.685 (95% CL: 0.685 0.685)
+##    Ipsilateral Spillover: 0.009 (95% CL: 0 0.094)
+##  Contralateral Spillover: 0.032 (95% CL: 0 0.13)
+## Coefficient of variation: 48.425 (95% CL: 35.969 75.865)
+## deviance                :  NA 
+## AIC                     :  1382.215 including penalty for the spillover scale parameter
 ```
 
 ``` r
@@ -198,20 +209,20 @@ summary(analysisLME4_L)
 ## Analysis method:  LME4 
 ## Link function:  logit 
 ## Measure of distance or surround: Signed distance to other arm (km)
-## Estimated scale parameter: 0.249
-## Model formula:  pvar + (1 | cluster) 
+##  with estimation of scale parameter.  
+## Model formula:  effect + (1 | cluster) 
 ## Sigmoid (logistic) function for spillover
-## Estimates:       Control:  0.416  (95% CL:  0.33 0.507 )
-##             Intervention:  0.186  (95% CL:  0.135 0.249 )
-##                 Efficacy:  0.551  (95% CL:  0.328 0.701 )
-## Spillover interval(km):      4.26  (95% CL:  4.24 4.28 )
-## % locations contaminated: 92.7  (95% CL:  92.2 93 %)
-## Total effect            : 0.229  (95% CL:  0.114 0.342 )
-## Ipsilateral Spillover   : 0.0219  (95% CL:  0.012 0.0303 )
-## Contralateral Spillover : 0.0387  (95% CL:  0.018 0.0606 )
-## Coefficient of variation:  48.4 %  (95% CL:  36 75.9 )
-## deviance:  1374.201 
-## AIC     :  1382.201 including penalty for the spillover scale parameter
+## Estimates:       Control: 0.415 (95% CL: 0.331 0.507)
+##             Intervention: 0.186 (95% CL: 0.135 0.251)
+##                 Efficacy: 0.551 (95% CL: 0.329 0.701)
+##          Scale parameter: 0.249 (95% CL: 0.249 0.249)
+##   Spillover interval(km): 1.81 (95% CL: 1.776 1.823)
+## Pr in spillover interval: 0.706 (95% CL: 0.706 0.706)
+##    Ipsilateral Spillover: 0.009 (95% CL: 0 0.098)
+##  Contralateral Spillover: 0.03 (95% CL: 0 0.127)
+## Coefficient of variation: 48.425 (95% CL: 35.969 75.865)
+## deviance                :  NA 
+## AIC                     :  1382.201 including penalty for the spillover scale parameter
 ```
 
 ``` r
@@ -225,20 +236,20 @@ summary(analysisLME4_S)
 ## Analysis method:  LME4 
 ## Link function:  logit 
 ## Measure of distance or surround: Signed distance to other arm (km)
-## Estimated scale parameter: 1.674
-## Model formula:  pvar + (1 | cluster) 
+##  with estimation of scale parameter.  
+## Model formula:  effect + (1 | cluster) 
 ## Piecewise linear function for spillover
-## Estimates:       Control:  0.423  (95% CL:  0.334 0.518 )
-##             Intervention:  0.185  (95% CL:  0.135 0.247 )
-##                 Efficacy:  0.561  (95% CL:  0.344 0.71 )
-## Spillover interval(km):      4.1  (95% CL:  4.1 4.11 )
-## % locations contaminated: 86.6  (95% CL:  86.6 87.1 %)
-## Total effect            : 0.237  (95% CL:  0.122 0.354 )
-## Ipsilateral Spillover   : 0.0289  (95% CL:  0.0162 0.0403 )
-## Contralateral Spillover : 0.0521  (95% CL:  0.0253 0.0813 )
-## Coefficient of variation:  48.4 %  (95% CL:  36 75.9 )
-## deviance:  1374.094 
-## AIC     :  1382.094 including penalty for the spillover scale parameter
+## Estimates:       Control: 0.423 (95% CL: 0.335 0.516)
+##             Intervention: 0.185 (95% CL: 0.134 0.247)
+##                 Efficacy: 0.563 (95% CL: 0.34 0.71)
+##          Scale parameter: 1.674 (95% CL: 1.674 1.674)
+##   Spillover interval(km): 1.586 (95% CL: 1.586 1.593)
+## Pr in spillover interval: 0.633 (95% CL: 0.633 0.633)
+##    Ipsilateral Spillover: 0.012 (95% CL: 0 0.11)
+##  Contralateral Spillover: 0.051 (95% CL: 0 0.139)
+## Coefficient of variation: 48.425 (95% CL: 35.969 75.865)
+## deviance                :  NA 
+## AIC                     :  1382.094 including penalty for the spillover scale parameter
 ```
 
 ``` r
@@ -252,20 +263,18 @@ summary(analysisLME4_R)
 ## Analysis method:  LME4 
 ## Link function:  logit 
 ## Measure of distance or surround: Signed distance to other arm (km)
-## No non-linear parameter. 1
-## Model formula:  pvar + (1 | cluster) 
+##  with no non-linear parameter.  
+## Model formula:  effect + (1 | cluster) 
 ## Rescaled linear function for spillover
-## Estimates:       Control:  0.584  (95% CL:  0.383 0.759 )
-##             Intervention:  0.116  (95% CL:  0.059 0.216 )
-##                 Efficacy:  0.8  (95% CL:  0.466 0.919 )
-## Spillover interval(km):      6.64  (95% CL:  6.61 6.65 )
-## % locations contaminated: 99.8  (95% CL:  99.8 99.8 %)
-## Total effect            : 0.465  (95% CL:  0.181 0.691 )
-## Ipsilateral Spillover   : 0.117  (95% CL:  0.0559 0.157 )
-## Contralateral Spillover : 0.236  (95% CL:  0.0831 0.367 )
-## Coefficient of variation:  48.4 %  (95% CL:  36 75.9 )
-## deviance:  1378.711 
-## AIC     :  1384.711
+## Estimates:       Control: 0.585 (95% CL: 0.386 0.76)
+##             Intervention: 0.116 (95% CL: 0.06 0.211)
+##                 Efficacy: 0.8 (95% CL: 0.478 0.918)
+##          Scale parameter: 1 (95% CL: 1 1)
+##   Spillover interval(km): 6.372 (95% CL: 6.243 6.433)
+## Pr in spillover interval: 0.997 (95% CL: 0.997 0.997)
+## Coefficient of variation: 48.425 (95% CL: 35.969 75.865)
+## deviance                :  NA 
+## AIC                     :  1384.711
 ```
 
 ``` r
@@ -286,7 +295,8 @@ plot_grid(p0, p1, p2, p3, p4, p5, labels = c('Z', 'X', 'P', 'L', 'S', 'R'), labe
 The piecewise linear spillover function, `cfunc = "S"`, is only linear on the scale of the linear predictor. When used in a logistic model, as here, the transformation via the inverse of the link function leads to a slightly curved plot (Figure 5.1S). The rescaled linear function, `cfunc = "R"`, is provided as a comparator and for use with `distance` values other than `distance = "nearestDiscord"` see below (it should not be used to estimate the spillover interval).
 
 The full set of different `cfunc` options are available for each of model options `"LME4"`, `"INLA"`, and `"MCMC"`.
-The performance of all these different models has not yet been thoroughly investigated. The analyses of [Multerer *et al.* (2021b)](https://malariajournal.biomedcentral.com/articles/10.1186/s12936-021-03924-7) found that that a model equivalent to  `method = "MCMC"`, `cfunc = "L"` gave estimates of efficacy with low bias, even in simulations with considerable spillover.
+The performance of all these different models has not yet been thoroughly investigated.
+The analyses of [Multerer *et al.* (2021b)](https://link.springer.com/article/10.1186/s12936-021-03924-7) found that that a model equivalent to  `method = "MCMC"`, `cfunc = "L"` gave estimates of efficacy with low bias, even in simulations with considerable spillover.
 
 #### Spillover as a function of surround
 Spillover can also be analysed by assuming the effect size to be a function of the number of intervened locations in the surroundings of the location
@@ -342,24 +352,22 @@ summary(examples_hdep)
 ## Analysis method:  LME4 
 ## Link function:  logit 
 ## Measure of distance or surround: Tukey half-depth 
-## No non-linear parameter. 1
-## Model formula:  pvar + (1 | cluster) 
+##  with no non-linear parameter.  
+## Model formula:  effect + (1 | cluster) 
 ## Rescaled linear function for spillover
-## Estimates:       Control:  0.382  (95% CL:  0.293 0.477 )
-##             Intervention:  0.208  (95% CL:  0.151 0.281 )
-##                 Efficacy:  0.451  (95% CL:  0.168 0.642 )
-## Spillover interval(km):      0.978  (95% CL:  0.976 0.98 )
-## % locations contaminated: 55  (95% CL:  55 55 %)
-## Total effect            : 0.172  (95% CL:  0.0526 0.292 )
-## Ipsilateral Spillover   : 0.0313  (95% CL:  0.0101 0.0511 )
-## Contralateral Spillover : 0.0443  (95% CL:  0.0128 0.0781 )
-## Coefficient of variation:  48.4 %  (95% CL:  36 75.9 )
-## deviance:  1379.89 
-## AIC     :  1385.89
+## Estimates:       Control: 0.382 (95% CL: 0.293 0.478)
+##             Intervention: 0.208 (95% CL: 0.151 0.282)
+##                 Efficacy: 0.454 (95% CL: 0.168 0.644)
+##          Scale parameter: 1 (95% CL: 1 1)
+##   Spillover interval(km): 0.939 (95% CL: 0.928 0.947)
+## Pr in spillover interval: 0.529 (95% CL: 0.529 0.529)
+## Coefficient of variation: 48.425 (95% CL: 35.969 75.865)
+## deviance                :  NA 
+## AIC                     :  1385.89
 ```
 
 ``` r
-ps4 <- plotCRT(examples_hdep,legend.position = c(0.8, 0.8))
+ps4 <- plotCRT(examples_hdep)
 examples_sdep <- CRTanalysis(examples, method = "LME4", distance = "sdep", cfunc = 'R')
 summary(examples_sdep)
 ```
@@ -370,20 +378,18 @@ summary(examples_sdep)
 ## Analysis method:  LME4 
 ## Link function:  logit 
 ## Measure of distance or surround: Simplicial depth 
-## No non-linear parameter. 1
-## Model formula:  pvar + (1 | cluster) 
+##  with no non-linear parameter.  
+## Model formula:  effect + (1 | cluster) 
 ## Rescaled linear function for spillover
-## Estimates:       Control:  0.394  (95% CL:  0.307 0.488 )
-##             Intervention:  0.198  (95% CL:  0.144 0.265 )
-##                 Efficacy:  0.496  (95% CL:  0.248 0.663 )
-## Spillover interval(km):      0.978  (95% CL:  0.976 0.98 )
-## % locations contaminated: 52.4  (95% CL:  52.2 52.4 %)
-## Total effect            : 0.195  (95% CL:  0.0808 0.308 )
-## Ipsilateral Spillover   : 0.0301  (95% CL:  0.0131 0.046 )
-## Contralateral Spillover : 0.0436  (95% CL:  0.0171 0.0713 )
-## Coefficient of variation:  48.4 %  (95% CL:  36 75.9 )
-## deviance:  1376.417 
-## AIC     :  1382.417
+## Estimates:       Control: 0.394 (95% CL: 0.309 0.488)
+##             Intervention: 0.199 (95% CL: 0.144 0.267)
+##                 Efficacy: 0.495 (95% CL: 0.25 0.661)
+##          Scale parameter: 1 (95% CL: 1 1)
+##   Spillover interval(km): 0.937 (95% CL: 0.927 0.945)
+## Pr in spillover interval: 0.485 (95% CL: 0.485 0.485)
+## Coefficient of variation: 48.425 (95% CL: 35.969 75.865)
+## deviance                :  NA 
+## AIC                     :  1382.417
 ```
 
 ``` r
@@ -398,24 +404,22 @@ summary(examples_disc)
 ## Analysis method:  LME4 
 ## Link function:  logit 
 ## Measure of distance or surround: disc of radius 0.15 km
-## Precalculated scale parameter: 0.15
-## Model formula:  pvar + (1 | cluster) 
+##  with precalculated scale parameter of 0.15:  
+## Model formula:  effect + (1 | cluster) 
 ## Rescaled linear function for spillover
-## Estimates:       Control:  0.386  (95% CL:  0.312 0.47 )
-##             Intervention:  0.2  (95% CL:  0.149 0.262 )
-##                 Efficacy:  0.481  (95% CL:  0.27 0.635 )
-## Spillover interval(km):      0.978  (95% CL:  0.976 0.98 )
-## % locations contaminated: 8.89  (95% CL:  8.89 8.89 %)
-## Total effect            : 0.185  (95% CL:  0.0903 0.283 )
-## Ipsilateral Spillover   : 0.00456  (95% CL:  0.00237 0.00662 )
-## Contralateral Spillover : 0.00574  (95% CL:  0.00266 0.00905 )
-## Coefficient of variation:  48.4 %  (95% CL:  36 75.9 )
-## deviance:  1374.274 
-## AIC     :  1380.274
+## Estimates:       Control: 0.387 (95% CL: 0.312 0.47)
+##             Intervention: 0.2 (95% CL: 0.15 0.262)
+##                 Efficacy: 0.482 (95% CL: 0.276 0.632)
+##          Scale parameter: 0.15 (95% CL: 0.15 0.15)
+##   Spillover interval(km): 0.938 (95% CL: 0.928 0.945)
+## Pr in spillover interval: 0.089 (95% CL: 0.089 0.089)
+## Coefficient of variation: 48.425 (95% CL: 35.969 75.865)
+## deviance                :  NA 
+## AIC                     :  1380.274
 ```
 
 ``` r
-ps6 <- plotCRT(examples_disc)
+ps6 <- plotCRT(examples_disc,legend.position = c(0.8, 0.8))
 examples_kern <- CRTanalysis(examples, method = "LME4", distance = "kern", cfunc = 'R', scale_par = 0.15)
 summary(examples_kern)
 ```
@@ -426,20 +430,18 @@ summary(examples_kern)
 ## Analysis method:  LME4 
 ## Link function:  logit 
 ## Measure of distance or surround: kern with kernel s.d. 0.15 km
-## Precalculated scale parameter: 0.15
-## Model formula:  pvar + (1 | cluster) 
+##  with precalculated scale parameter of 0.15:  
+## Model formula:  effect + (1 | cluster) 
 ## Rescaled linear function for spillover
-## Estimates:       Control:  0.406  (95% CL:  0.328 0.49 )
-##             Intervention:  0.184  (95% CL:  0.136 0.246 )
-##                 Efficacy:  0.545  (95% CL:  0.341 0.684 )
-## Spillover interval(km):      0.979  (95% CL:  0.977 0.98 )
-## % locations contaminated: 50.8  (95% CL:  50.6 50.9 %)
-## Total effect            : 0.22  (95% CL:  0.12 0.321 )
-## Ipsilateral Spillover   : 0.011  (95% CL:  0.0065 0.0152 )
-## Contralateral Spillover : 0.0135  (95% CL:  0.0069 0.0204 )
-## Coefficient of variation:  48.4 %  (95% CL:  36 75.9 )
-## deviance:  1369.677 
-## AIC     :  1375.677
+## Estimates:       Control: 0.406 (95% CL: 0.328 0.491)
+##             Intervention: 0.185 (95% CL: 0.137 0.247)
+##                 Efficacy: 0.544 (95% CL: 0.342 0.684)
+##          Scale parameter: 0.15 (95% CL: 0.15 0.15)
+##   Spillover interval(km): 0.935 (95% CL: 0.925 0.944)
+## Pr in spillover interval: 0.59 (95% CL: 0.59 0.59)
+## Coefficient of variation: 48.425 (95% CL: 35.969 75.865)
+## deviance                :  NA 
+## AIC                     :  1375.677
 ```
 
 ``` r
@@ -457,7 +459,7 @@ To carry out a geostatistical analysis with `method = "INLA"` a prediction mesh 
 resolution mesh is created (creating a high resolution mesh is computationally expensive). To create a 100m INLA mesh
 for `<MyTrial>`, use:
 
-`mesh <- new_mesh(trial = <MyTrial> , pixel = 0.1)`
+`mesh <- compute_mesh(trial = <MyTrial> , pixel = 0.1)`
 
 
 

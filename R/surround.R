@@ -53,7 +53,8 @@
 #' exampletrial <- compute_distance(trial = readdata('exampleCRT.txt'),
 #' distance = 'disc', scale_par = 0.5)
 #' }
-compute_distance <- function(trial, distance = "nearestDiscord", scale_par = NULL, auxiliary = NULL) {
+compute_distance <- function(trial, distance = "nearestDiscord",
+                      scale_par = NULL, auxiliary = NULL) {
   CRT <- CRTsp(trial)
   trial <- CRT$trial
   require_nearestDiscord <- is.null(trial$nearestDiscord) & identical(distance, "nearestDiscord")
@@ -76,10 +77,10 @@ compute_distance <- function(trial, distance = "nearestDiscord", scale_par = NUL
       if (identical(distance, "nearestDiscord")) {
         trial$nearestDiscord <- ifelse(trial$arm == "control",
                                        -dist_vec$dist_corrected, dist_vec$dist_corrected)
-        message("*** nearestDiscord is distance to nearest pixel in discordant arm ***")
+        message(" nearestDiscord is distance to nearest pixel in discordant arm ")
       } else {
         trial$distanceAssigned <- dist_vec$dist_corrected
-        message("*** distanceAssigned is distance to nearest pixel in the assigned cluster ***")
+        message(" distanceAssigned is distance to nearest pixel in the assigned cluster ")
       }
     }
   } else {
@@ -110,10 +111,10 @@ compute_distance <- function(trial, distance = "nearestDiscord", scale_par = NUL
             trial$nearestDiscord <- ifelse(trial$arm == "control", -apply(discord_dist_trial,
                        MARGIN = 2, min), apply(discord_dist_trial, MARGIN = 2, min))
             CRT$design$nearestDiscord <- distance_stats(trial, distance = "nearestDiscord")
-            message("*** computed distance to nearest measurements in discordant arm ***")
+            # message(" computed distance to nearest measurements in discordant arm ")
         }
         if (require_disc){
-            if (is.null(scale_par)) {
+            if (is.null(scale_par) | is.na(scale_par)) {
               stop("*** radius (scale_par) must be specified for computation of disc ***")
             }
             neighbours <- colSums(dist_trial <= scale_par)
@@ -123,7 +124,7 @@ compute_distance <- function(trial, distance = "nearestDiscord", scale_par = NUL
             CRT$design$disc$scale_par <- scale_par
         }
         if (require_kern){
-            if (is.null(scale_par)) {
+            if (is.null(scale_par) | is.na(scale_par)) {
               stop("*** s.d. (scale_par) must be specified for computation of kern ***")
             }
             weighted_neighbours <- colSums(dnorm(dist_trial, mean = 0, sd = scale_par))

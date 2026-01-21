@@ -24,9 +24,9 @@ model. This does not preclude its use in other fields of research. The
 anticipated use cases are described in the vignettes (articles)
 
 The package builds on the work of [Multerer *et al.*
-(2021a)](https://trialsjournal.biomedcentral.com/articles/10.1186/s13063-021-05543-8),
+(2021a)](https://link.springer.com/article/10.1186/s13063-021-05543-8),
 [Multerer *et al.*
-(2021b)](https://malariajournal.biomedcentral.com/articles/10.1186/s12936-021-03924-7)
+(2021b)](https://link.springer.com/article/10.1186/s12936-021-03924-7)
 and [Anaya-Izquierdo &
 Alexander(2021)](https://onlinelibrary.wiley.com/doi/full/10.1111/biom.13316).
 
@@ -41,13 +41,4 @@ By contributing to this project, you agree to abide by its terms.
 
 `CRTspat` is on [CRAN](https://CRAN.R-project.org/package=CRTspat) and
 on [github](https://github.com/ThomasASmith/CRTspat/). It can be
-installed from CRAN or using:
-
-``` r
-install.packages("devtools")
-library(devtools)
-install_github("thomasasmith/CRTspat")
-```
-
-Markov chain Monte Carlo analysis using `CRTspat` also requires
-installation of [JAGS](https://mcmc-jags.sourceforge.io/)
+installed from CRAN.
